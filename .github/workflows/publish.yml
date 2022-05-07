@@ -39,7 +39,7 @@ jobs:
         run: dotnet pack --configuration Release /p:Version=${{ steps.semvers.outputs.patch }} --no-build --output .
 
       - name: Push
-        run: dotnet nuget push *.nupkg --source https://nuget.pkg.github.com/acraven/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+        run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
 
       - uses: rickstaa/action-create-tag@v1
         with:
