@@ -48,6 +48,7 @@ namespace ResurrectedTrade.AgentBase
                 .ToDictionary(o => o.BattleTag, o => o);
             _logger.Log($"Got remote manifests: {remoteManifests.Count}");
             _manifests = remoteManifests;
+            _previousHash.Clear();
         }
 
         public bool IsInitialized()
