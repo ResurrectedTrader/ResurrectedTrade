@@ -18,8 +18,8 @@ jobs:
           dotnet-version: 3.1.200
 
       # Publish
-      - name: publish on version change
-        id: publish_nuget
+      - name: publish common
+        id: publish_common
         uses: brandedoutcast/publish-nuget@v2.5.5
         with:
           # Filepath of the project to be packaged, relative to root of repository
@@ -53,8 +53,8 @@ jobs:
           INCLUDE_SYMBOLS: false
 
       # Publish
-      - name: publish on version change
-        id: publish_nuget
+      - name: publish agent base
+        id: publish_agent
         uses: brandedoutcast/publish-nuget@v2.5.5
         with:
           # Filepath of the project to be packaged, relative to root of repository
