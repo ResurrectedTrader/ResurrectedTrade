@@ -13,7 +13,7 @@ using ResurrectedTrade.Protocol.Agent;
 
 namespace ResurrectedTrade.AgentBase
 {
-    public class RunOutcome
+    public class SubmitOutcome
     {
         public bool Attempted;
         public int CooldownMilliseconds;
@@ -56,29 +56,22 @@ namespace ResurrectedTrade.AgentBase
             return _manifests != null;
         }
 
-        public RunOutcome RunForHandle(Ptr handle, Ptr baseAddress)
+        public Export GetExport(Process process)
         {
-            return RunWithAccess(new RemoteMemoryAccess(handle, baseAddress));
+            return GetExport(process.Handle, process.MainModule.BaseAddress);
         }
 
-        public RunOutcome RunForProcess(Process process)
-        {
-            using (var access = new RemoteMemoryAccess(process))
-            {
-                return RunWithAccess(access);
-            }
-        }
-
-        private RunOutcome RunWithAccess(MemoryAccess access)
+        public Export GetExport(Ptr handle, Ptr baseAddress)
         {
             if (_manifests == null) throw new ApplicationException("No manifests found");
+            var access = new RemoteMemoryAccess(handle, baseAddress);
 
             var sessionData = access.Read<D2SessionData>(access.BaseAddress + _offsets.SessionData);
             string battleTag = Encoding.UTF8.GetString(
                 access.Read<byte>(sessionData.pBattleTagStr, (uint)sessionData.BattleTagLength)
             );
 
-            // Local chars go under '_' battle tag, which gets replaced service side.
+            // Local chars go under '_' battle tag.
             var isOnline = access.Read<bool>(access.BaseAddress + _offsets.IsOnlineGame);
             if (!isOnline)
             {
@@ -89,7 +82,7 @@ namespace ResurrectedTrade.AgentBase
 
             _manifests.TryGetValue(battleTag, out var manifest);
 
-            Export accountExport = capture.GetExport(manifest, isOnline: isOnline);
+            var accountExport = capture.GetExport(manifest, isOnline: isOnline);
             if (accountExport != null)
             {
                 _logger.Log($"Export {accountExport} {battleTag}");
@@ -110,7 +103,7 @@ namespace ResurrectedTrade.AgentBase
                 // In theory we could use these from the game client, but given there is only one value per account
                 // Using the "latest one that had changes" makes most sense, atleast in terms of region.
                 // Locale probably does not matter much.
-                switch (region)
+                switch (region?.ToUpper())
                 {
                     case "US":
                         accountExport.Region = Region.Americas;
@@ -126,83 +119,83 @@ namespace ResurrectedTrade.AgentBase
                         break;
                 }
 
-                switch (locale)
+                switch (locale?.ToUpper())
                 {
-                    case "enUS":
+                    case "ENUS":
                         accountExport.Locale = Locale.EnUs;
                         break;
-                    case "zhTW":
+                    case "ZHTW":
                         accountExport.Locale = Locale.ZhTw;
                         break;
-                    case "deDE":
+                    case "DEDE":
                         accountExport.Locale = Locale.DeDe;
                         break;
-                    case "esES":
+                    case "ESES":
                         accountExport.Locale = Locale.EsEs;
                         break;
-                    case "frFR":
+                    case "FRFR":
                         accountExport.Locale = Locale.FrFr;
                         break;
-                    case "itIT":
+                    case "ITIT":
                         accountExport.Locale = Locale.ItIt;
                         break;
-                    case "koKR":
+                    case "KOKR":
                         accountExport.Locale = Locale.KoKr;
                         break;
-                    case "plPL":
+                    case "PLPL":
                         accountExport.Locale = Locale.PlPl;
                         break;
-                    case "esMX":
+                    case "ESMX":
                         accountExport.Locale = Locale.EsMx;
                         break;
-                    case "jaJP":
+                    case "JAJP":
                         accountExport.Locale = Locale.JaJp;
                         break;
-                    case "ptBR":
+                    case "PTBR":
                         accountExport.Locale = Locale.PtBr;
                         break;
-                    case "ruRU":
+                    case "RURU":
                         accountExport.Locale = Locale.RuRu;
                         break;
-                    case "zhCN":
+                    case "ZHCN":
                         accountExport.Locale = Locale.ZhCn;
                         break;
                     default:
                         accountExport.Locale = Locale.Undefined;
                         break;
                 }
+            }
 
-                var accountExportHash = accountExport.Hash();
-                if ((!_previousHash.TryGetValue(accountExport.BattleTag, out int prevHash) ||
-                     prevHash != accountExportHash) && _debounce)
+            return accountExport;
+        }
+
+        public SubmitOutcome SubmitExport(Export accountExport, bool? debounce = null)
+        {
+            var accountExportHash = accountExport.Hash();
+            if ((!_previousHash.TryGetValue(accountExport.BattleTag, out int prevHash) ||
+                 prevHash != accountExportHash) && (debounce ?? _debounce))
+            {
+                _logger.Log("Debouncing...");
+                _previousHash[accountExport.BattleTag] = accountExportHash;
+                return new SubmitOutcome
                 {
-                    _logger.Log("Debouncing...");
-                    _previousHash[accountExport.BattleTag] = accountExportHash;
-                    return new RunOutcome
-                    {
-                        Attempted = false
-                    };
-                }
-
-                _logger.Log("Exporting...");
-                var response = SendExport(accountExport);
-                _logger.Log($"Got manifest: {response.NewManifest}");
-                _manifests[battleTag] = response.NewManifest;
-                _debounce = response.ShouldDebounce;
-
-                return new RunOutcome
-                {
-                    Attempted = true,
-                    Success = response.Success,
-                    ErrorId = response.ErrorId,
-                    ErrorMessage = response.ErrorMessage,
-                    CooldownMilliseconds = response.CooldownMilliseconds
+                    Attempted = false
                 };
             }
 
-            return new RunOutcome
+            _logger.Log("Exporting...");
+            var response = SendExport(accountExport);
+            _logger.Log($"Got manifest: {response.NewManifest}");
+            _manifests[accountExport.BattleTag] = response.NewManifest;
+            _debounce = response.ShouldDebounce;
+
+            return new SubmitOutcome
             {
-                Attempted = false
+                Attempted = true,
+                Success = response.Success,
+                ErrorId = response.ErrorId,
+                ErrorMessage = response.ErrorMessage,
+                CooldownMilliseconds = response.CooldownMilliseconds
             };
         }
 
