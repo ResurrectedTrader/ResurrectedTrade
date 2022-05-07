@@ -1,0 +1,70 @@
+﻿syntax = "proto3";
+
+package resurrected.trade.protocol.profile;
+option csharp_namespace = "ResurrectedTrade.Protocol.Profile";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+message RegisterRequest {
+  string user_id = 1;
+  string password = 2;
+  string email = 3;
+}
+
+message AuthError {
+  string code = 1;
+  string description = 2;
+}
+
+message AuthResponse {
+  bool success = 1;
+  repeated AuthError errors = 2;
+}
+
+message LoginRequest {
+  string user_id = 1;
+  string password = 2;
+}
+
+message EmailWithToken {
+  string email = 1;
+  string token = 2;
+}
+
+message ResetPasswordRequest {
+  EmailWithToken email_with_token = 1;
+  string new_password = 3;
+}
+
+message ValueChangeRequest {
+  string new_value = 1;
+  string password = 2;
+}
+
+message Profile {
+  string user_id = 1;
+  string email = 2;
+  repeated string roles = 3;
+}
+
+service ProfileService {
+  rpc Register(RegisterRequest) returns (AuthResponse) {}
+  rpc Login(LoginRequest) returns (AuthResponse) {}
+  rpc Logout(google.protobuf.Empty) returns (AuthResponse) {}
+
+  rpc GetProfile(google.protobuf.Empty) returns (Profile) {}
+
+  rpc ConfirmEmail(EmailWithToken) returns (AuthResponse) {}
+  rpc ResendEmailConfirmation(LoginRequest) returns (AuthResponse) {}
+  // Email
+  rpc RequestPasswordReset(google.protobuf.StringValue) returns (AuthResponse) {}
+  rpc ResetPassword(ResetPasswordRequest) returns (AuthResponse) {}
+
+  rpc ChangePassword(ValueChangeRequest) returns (AuthResponse) {}
+  rpc ChangeEmail(ValueChangeRequest) returns (AuthResponse) {}
+  rpc ChangeUserId(ValueChangeRequest) returns (AuthResponse) {}
+
+  // Password
+  rpc DeleteAccount(google.protobuf.StringValue) returns (AuthResponse) {}
+}

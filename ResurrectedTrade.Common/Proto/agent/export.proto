@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package resurrected.trade.protocol.agent;
+option csharp_namespace = "ResurrectedTrade.Protocol.Agent";
+
+import "common.proto";
+
+message ItemExport {
+  uint32 position = 1;
+  Item item = 2;
+}
+
+message GridExport {
+  Grid grid = 1;
+  repeated ItemExport adds = 2;
+  repeated uint32 removes = 3;
+}
+
+message CharacterExport {
+  string name = 1;
+  uint32 class = 2;
+  uint32 flags = 3;
+  repeated Stat stats = 6;
+  repeated GridExport grids = 7;
+}
+
+message Move {
+  Location from = 1;
+  Location to = 2;
+}
+
+message Export {
+  string battle_tag = 1;
+  repeated CharacterExport characters = 2;
+  repeated Move moves = 3;
+  Region region = 4;
+  Locale locale = 5;
+}

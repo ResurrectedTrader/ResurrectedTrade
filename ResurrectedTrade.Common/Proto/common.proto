@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package resurrected.trade.protocol;
+option csharp_namespace = "ResurrectedTrade.Protocol";
+
+enum Region {
+  REGION_UNDEFINED = 0;
+  REGION_ASIA = 1;
+  REGION_EUROPE = 2;
+  REGION_AMERICAS = 3;
+}
+
+enum Locale {
+  LOCALE_UNDEFINED = 0;
+  LOCALE_EN_US = 1;
+  LOCALE_ZH_TW = 2;
+  LOCALE_DE_DE = 3;
+  LOCALE_ES_ES = 4;
+  LOCALE_FR_FR = 5;
+  LOCALE_IT_IT = 6;
+  LOCALE_KO_KR = 7;
+  LOCALE_PL_PL = 8;
+  LOCALE_ES_MX = 9;
+  LOCALE_JA_JP = 10;
+  LOCALE_PT_BR = 11;
+  LOCALE_RU_RU = 12;
+  LOCALE_ZH_CN = 13;
+}
+
+enum Grid {
+  UNDEFINED_GRID = 0;
+  EQUIPPED = 1;
+  BELT = 2;
+  INVENTORY = 3;
+  CUBE = 4;
+  STASH = 5;
+  MERCENARY = 6;
+}
+
+message GridPosition {
+  Grid grid = 1;
+  uint32 position = 2;
+}
+
+message Location {
+  string character = 1;
+  GridPosition grid_position = 2;
+}
+
+message Stat {
+  uint32 layer = 1;
+  uint32 id = 2;
+  int32 value = 3;
+}
+
+message Item {
+  uint32 file_index = 1;
+  int32 item_data_file_index = 2;
+  uint32 quality = 3;
+  uint32 flags = 4;
+  uint32 graphics_index = 5;
+  int32 prefix1 = 6;
+  int32 prefix2 = 7;
+  int32 prefix3 = 8;
+  int32 suffix1 = 9;
+  int32 suffix2 = 10;
+  int32 suffix3 = 11;
+  int32 auto_affix = 12;
+  int32 rare_prefix = 13;
+  int32 rare_suffix = 14;
+  repeated Stat base_stats = 15;
+  repeated Stat stats = 16;
+  repeated Item sockets = 17;
+}
+
+message Identity {
+  string user_id = 1;
+  string battle_tag = 2;
+  string character_name = 3;
+}

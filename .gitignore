@@ -350,6 +350,3 @@ MigrationBackup/
 .ionide/
 
 .idea/
-
-deploy.sh
-update.sh

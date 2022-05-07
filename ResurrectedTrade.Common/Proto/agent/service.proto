@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package resurrected.trade.protocol.agent;
+option csharp_namespace = "ResurrectedTrade.Protocol.Agent";
+
+import "agent/export.proto";
+import "agent/manifest.proto";
+import "google/protobuf/empty.proto";
+
+
+message ExportResponse {
+  bool success = 1;
+  Manifest new_manifest = 2;
+  int32 cooldown_milliseconds = 3;
+  bool should_debounce = 4;
+  string error_id = 5;
+  string error_message = 6;
+}
+
+service AgentService {
+  rpc GetManifests(google.protobuf.Empty) returns (stream Manifest) {}
+  rpc SubmitExport(Export) returns (ExportResponse) {}
+}
