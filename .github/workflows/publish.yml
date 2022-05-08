@@ -105,12 +105,12 @@ jobs:
           localPath: ResurrectedTrade.exe.latest.txt
           remotePath: uploads/ResurrectedTrade.exe.latest.txt
 
-#      - name: Push Common
-#        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#
-#      - name: Push Agent Base
-#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#
-#      - uses: rickstaa/action-create-tag@v1
-#        with:
-#          tag: v${{ needs.versions.outputs.next-version }}
+      - name: Push Common
+        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+
+      - name: Push Agent Base
+        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+
+      - uses: rickstaa/action-create-tag@v1
+        with:
+          tag: v${{ needs.versions.outputs.next-version }}
