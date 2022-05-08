@@ -101,9 +101,9 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: ResurrectedTrade.exe.latest.txt
           remotePath: ResurrectedTrade.exe.latest.txt
-  tag:
-    name: get-versions
-    runs-on: ubuntu-latest
+#  tag:
+#    name: get-versions
+#    runs-on: ubuntu-latest
 #      - name: Push Common
 #        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.get-versions.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
 #
