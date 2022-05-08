@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResurrectedTrade.Common", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResurrectedTrade.AgentBase", "ResurrectedTrade.AgentBase\ResurrectedTrade.AgentBase.csproj", "{06D47C25-A233-4097-9B0D-FFC4F664887F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResurrectedTrade.Agent", "ResurrectedTrade.Agent\ResurrectedTrade.Agent.csproj", "{91168060-2E64-44F2-BCE9-446E9FAFE3B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{06D47C25-A233-4097-9B0D-FFC4F664887F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06D47C25-A233-4097-9B0D-FFC4F664887F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06D47C25-A233-4097-9B0D-FFC4F664887F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91168060-2E64-44F2-BCE9-446E9FAFE3B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91168060-2E64-44F2-BCE9-446E9FAFE3B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91168060-2E64-44F2-BCE9-446E9FAFE3B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91168060-2E64-44F2-BCE9-446E9FAFE3B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
