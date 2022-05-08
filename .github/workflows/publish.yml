@@ -28,89 +28,97 @@ jobs:
         with:
           version: ${{ steps.previoustag.outputs.tag }}
 
-
-  build-nuget:
+  test-outputs:
     name: build nuget
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: versions
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Setup dotnet
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 3.1.200
-
       - name: Build
-        run: dotnet build --configuration Release /p:Version=${{ needs.versions.nextver }}
+        run: echo ${{ needs.versions.nextver }} ${{ needs.versions.curver }}
 
-      - name: Test
-        run: dotnet test --configuration Release /p:Version=${{ needs.versions.nextver }} --no-build
-
-      - name: Pack
-        run: dotnet pack --configuration Release /p:Version=${{ needs.versions.nextver }} --no-build --output .
-
-      - name: Publish Agent
-        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
-
-      - name: Sign Agent binaries
-        uses: dlemstra/code-sign-action@v1
-        with:
-          certificate: '${{ secrets.SIGNING_CERTIFICATE }}'
-          folder: 'out'
-          recursive: true
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: release
-          path: out/ResurrectedTrade.exe
-
-      - name: Create latest version file
-        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.nextver }}
-
-      - name: Upload Agent latest
-        id: upload_agent_latest
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST }}
-          port: ${{ secrets.SFTP_PORT }}
-          username: ${{ secrets.SFTP_USERNAME }}
-          password: ${{ secrets.SFTP_PASSWORD }}
-          localPath: out/ResurrectedTrade.exe
-          remotePath: ResurrectedTrade.exe
-
-      - name: Upload Agent versioned
-        id: upload_agent_versioned
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST }}
-          port: ${{ secrets.SFTP_PORT }}
-          username: ${{ secrets.SFTP_USERNAME }}
-          password: ${{ secrets.SFTP_PASSWORD }}
-          localPath: out/ResurrectedTrade.exe
-          remotePath: ResurrectedTrade-${{ needs.versions.nextver }}.exe
-
-      - name: Update latest version
-        id: upload_version
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTP_HOST }}
-          port: ${{ secrets.SFTP_PORT }}
-          username: ${{ secrets.SFTP_USERNAME }}
-          password: ${{ secrets.SFTP_PASSWORD }}
-          localPath: ResurrectedTrade.exe.latest.txt
-          remotePath: ResurrectedTrade.exe.latest.txt
-  #  tag:
-  #    name: versions
-  #    runs-on: ubuntu-latest
-  #      - name: Push Common
-  #        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.nextver }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-  #
-  #      - name: Push Agent Base
-  #        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.nextver }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-  #
-  #      - uses: rickstaa/action-create-tag@v1
-  #        with:
-  #          tag: v${{ needs.versions.nextver }}
+#
+#  build-nuget:
+#    name: build nuget
+#    runs-on: windows-latest
+#    needs: versions
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Setup dotnet
+#        uses: actions/setup-dotnet@v1
+#        with:
+#          dotnet-version: 3.1.200
+#
+#      - name: Build
+#        run: dotnet build --configuration Release /p:Version=${{ needs.versions.nextver }}
+#
+#      - name: Test
+#        run: dotnet test --configuration Release /p:Version=${{ needs.versions.nextver }} --no-build
+#
+#      - name: Pack
+#        run: dotnet pack --configuration Release /p:Version=${{ needs.versions.nextver }} --no-build --output .
+#
+#      - name: Publish Agent
+#        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
+#
+#      - name: Sign Agent binaries
+#        uses: dlemstra/code-sign-action@v1
+#        with:
+#          certificate: '${{ secrets.SIGNING_CERTIFICATE }}'
+#          folder: 'out'
+#          recursive: true
+#
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: release
+#          path: out/ResurrectedTrade.exe
+#
+#      - name: Create latest version file
+#        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.nextver }}
+#
+#      - name: Upload Agent latest
+#        id: upload_agent_latest
+#        uses: Creepios/sftp-action@v1.0.3
+#        with:
+#          host: ${{ secrets.SFTP_HOST }}
+#          port: ${{ secrets.SFTP_PORT }}
+#          username: ${{ secrets.SFTP_USERNAME }}
+#          password: ${{ secrets.SFTP_PASSWORD }}
+#          localPath: out/ResurrectedTrade.exe
+#          remotePath: ResurrectedTrade.exe
+#
+#      - name: Upload Agent versioned
+#        id: upload_agent_versioned
+#        uses: Creepios/sftp-action@v1.0.3
+#        with:
+#          host: ${{ secrets.SFTP_HOST }}
+#          port: ${{ secrets.SFTP_PORT }}
+#          username: ${{ secrets.SFTP_USERNAME }}
+#          password: ${{ secrets.SFTP_PASSWORD }}
+#          localPath: out/ResurrectedTrade.exe
+#          remotePath: ResurrectedTrade-${{ needs.versions.nextver }}.exe
+#
+#      - name: Update latest version
+#        id: upload_version
+#        uses: Creepios/sftp-action@v1.0.3
+#        with:
+#          host: ${{ secrets.SFTP_HOST }}
+#          port: ${{ secrets.SFTP_PORT }}
+#          username: ${{ secrets.SFTP_USERNAME }}
+#          password: ${{ secrets.SFTP_PASSWORD }}
+#          localPath: ResurrectedTrade.exe.latest.txt
+#          remotePath: ResurrectedTrade.exe.latest.txt
+#  #  tag:
+#  #    name: versions
+#  #    runs-on: ubuntu-latest
+#  #      - name: Push Common
+#  #        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.nextver }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#  #
+#  #      - name: Push Agent Base
+#  #        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.nextver }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#  #
+#  #      - uses: rickstaa/action-create-tag@v1
+#  #        with:
+#  #          tag: v${{ needs.versions.nextver }}
