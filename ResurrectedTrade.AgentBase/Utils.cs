@@ -27,7 +27,7 @@ namespace ResurrectedTrade.AgentBase
         public static readonly Uri ApiAddressUri = new Uri(ApiAddress);
 
         public static readonly RegistryKey AgentRegistryKey =
-            Registry.CurrentUser.CreateSubKey(@"HKEY_CURRENT_USER\SOFTWARE\Resurrected Trade\Agent");
+            Registry.CurrentUser.CreateSubKey(@"SOFTWARE\Resurrected Trade\Agent");
 
         private static readonly byte[] Nonce =
         {
