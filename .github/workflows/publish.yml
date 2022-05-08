@@ -58,11 +58,11 @@ jobs:
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
 
       - name: Sign Agent binaries
-        uses: dlemstra/code-sign-action@v1
+        uses: DanaBear/code-sign-action@v4
         with:
           certificate: ${{ secrets.SIGNING_CERTIFICATE }}
           folder: out
-          recursive: true
+          recursive: false
 
       - uses: actions/upload-artifact@v2
         with:
