@@ -64,6 +64,7 @@ jobs:
           password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
           certificatesha1: ${{ secrets.SIGNING_CERTIFICATE_FINGERPRINT }}
           certificatename: ${{ secrets.SIGNING_CERTIFICATE_NAME }}
+          timestampUrl: http://timestamp.digicert.com
           folder: out
           recursive: false
 
