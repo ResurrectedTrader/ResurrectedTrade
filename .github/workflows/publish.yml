@@ -5,7 +5,7 @@ on: [workflow_dispatch]
 #    branches:
 #      - main # Default release branch, may also be named 'master' or 'develop'
 jobs:
-  get-version:
+  get-versions:
     name: Get current and next semver
     runs-on: ubuntu-latest
     outputs:
