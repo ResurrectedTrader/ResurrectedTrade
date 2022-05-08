@@ -76,7 +76,7 @@ jobs:
 
       - name: Update latest version
         id: upload_version
-        uses: Creepios/sftp-action@v1.0.3q
+        uses: Creepios/sftp-action@v1.0.3
         with:
           host: ${{ secrets.SFTP_HOST }}
           port: ${{ secrets.SFTP_PORT }}
