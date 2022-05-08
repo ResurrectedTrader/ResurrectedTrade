@@ -28,20 +28,16 @@ jobs:
         with:
           version: ${{ steps.previoustag.outputs.tag }}
 
-  test-outputs:
+      - name: Print versions
+        run: 'echo Current version: ${{ steps.previoustag.outputs.tag }}, next version: ${{ steps.semvers.outputs.patch }}'
+
+  build-nuget:
     name: build nuget
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: versions
     steps:
-      - name: Build
-        run: echo ${{ needs.versions.nextver }} ${{ needs.versions.curver }}
-
-#
-#  build-nuget:
-#    name: build nuget
-#    runs-on: windows-latest
-#    needs: versions
-#    steps:
+      - name: Print versions
+        run: 'echo Current version: ${{ needs.versions.curver }}, next version: ${{ needs.versions.nextver }}'
 #      - uses: actions/checkout@v2
 #        with:
 #          fetch-depth: 0
@@ -66,8 +62,8 @@ jobs:
 #      - name: Sign Agent binaries
 #        uses: dlemstra/code-sign-action@v1
 #        with:
-#          certificate: '${{ secrets.SIGNING_CERTIFICATE }}'
-#          folder: 'out'
+#          certificate: ${{ secrets.SIGNING_CERTIFICATE }}
+#          folder: out
 #          recursive: true
 #
 #      - uses: actions/upload-artifact@v2
