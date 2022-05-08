@@ -57,16 +57,16 @@ jobs:
       - name: Publish Agent
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
 
-      - name: Sign Agent binaries
-        uses: Dana-Prajea/code-sign-action@v4
-        with:
-          certificate: ${{ secrets.SIGNING_CERTIFICATE }}
-          password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
-          certificatesha1: ${{ secrets.SIGNING_CERTIFICATE_FINGERPRINT }}
-          certificatename: ${{ secrets.SIGNING_CERTIFICATE_NAME }}
-          timestampUrl: http://timestamp.digicert.com
-          folder: out
-          recursive: false
+#      - name: Sign Agent binaries
+#        uses: Dana-Prajea/code-sign-action@v4
+#        with:
+#          certificate: ${{ secrets.SIGNING_CERTIFICATE }}
+#          password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+#          certificatesha1: ${{ secrets.SIGNING_CERTIFICATE_FINGERPRINT }}
+#          certificatename: ${{ secrets.SIGNING_CERTIFICATE_NAME }}
+#          timestampUrl: http://timestamp.digicert.com
+#          folder: out
+#          recursive: false
 
       - uses: actions/upload-artifact@v2
         with:
@@ -108,15 +108,13 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: ResurrectedTrade.exe.latest.txt
           remotePath: uploads/ResurrectedTrade.exe.latest.txt
-#  #  tag:
-#  #    name: versions
-#  #    runs-on: ubuntu-latest
-#  #      - name: Push Common
-#  #        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#  #
-#  #      - name: Push Agent Base
-#  #        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#  #
-#  #      - uses: rickstaa/action-create-tag@v1
-#  #        with:
-#  #          tag: v${{ needs.versions.outputs.next-version }}
+
+#      - name: Push Common
+#        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#
+#      - name: Push Agent Base
+#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#
+#      - uses: rickstaa/action-create-tag@v1
+#        with:
+#          tag: v${{ needs.versions.outputs.next-version }}
