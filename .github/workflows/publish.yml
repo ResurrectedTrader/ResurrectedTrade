@@ -27,6 +27,8 @@ jobs:
     outputs:
       curver: ${{ steps.previoustag.outputs.tag }}
       nextver: ${{ steps.semvers.outputs.patch }}
+      output1: ${{ steps.step1.outputs.test }}
+      output2: ${{ steps.step2.outputs.test }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -46,6 +48,10 @@ jobs:
 
       - name: Print versions
         run: 'echo Current version: ${{ steps.previoustag.outputs.tag }}, next version: ${{ steps.semvers.outputs.patch }}'
+      - id: step1
+        run: echo "::set-output name=test::${{ steps.previoustag.outputs.tag }}"
+      - id: step2
+        run: echo "::set-output name=test::${{ steps.semvers.outputs.patch }}"
 
   build-nuget:
     name: build nuget
@@ -53,7 +59,7 @@ jobs:
     needs: [versions]
     steps:
       - name: Print versions
-        run: 'echo Current version: ${{ needs.versions.curver }}, next version: ${{ needs.versions.nextver }}'
+        run: 'echo Current version: ${{ needs.versions.curver }}, next version: ${{ needs.versions.nextver }} -- ${{needs.job1.outputs.output1}} ${{needs.job1.outputs.output2}}'
 #      - uses: actions/checkout@v2
 #        with:
 #          fetch-depth: 0
