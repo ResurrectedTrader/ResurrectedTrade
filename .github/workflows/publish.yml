@@ -5,9 +5,33 @@ on: [workflow_dispatch]
 #    branches:
 #      - main # Default release branch, may also be named 'master' or 'develop'
 jobs:
+  get-version:
+    name: Get current and next semver
+    runs-on: ubuntu-latest
+    outputs:
+      current-version: steps.previoustag.outputs.tag
+      next-version: steps.semvers.outputs.patch
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 1.0.2
+
+      - name: 'Get next minor version'
+        id: semvers
+        uses: "WyriHaximus/github-action-next-semvers@v1"
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
+
   publish:
     name: build, pack & publish
     runs-on: windows-latest
+    needs: get-versions
     steps:
       - uses: actions/checkout@v2
         with:
@@ -17,29 +41,15 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.200
-      
-      - name: 'Get Previous tag'
-        id: previoustag
-        runs-on: ubuntu-latest
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
-        with:
-          fallback: 1.0.2
-
-      - name: 'Get next minor version'
-        id: semvers
-        runs-on: ubuntu-latest
-        uses: "WyriHaximus/github-action-next-semvers@v1"
-        with:
-          version: ${{ steps.previoustag.outputs.tag }}
 
       - name: Build
-        run: dotnet build --configuration Release /p:Version=${{ steps.semvers.outputs.patch }}
+        run: dotnet build --configuration Release /p:Version=${{ needs.get-versions.next-version }}
 
       - name: Test
-        run: dotnet test --configuration Release /p:Version=${{ steps.semvers.outputs.patch }} --no-build
+        run: dotnet test --configuration Release /p:Version=${{ needs.get-versions.next-version }} --no-build
 
       - name: Pack
-        run: dotnet pack --configuration Release /p:Version=${{ steps.semvers.outputs.patch }} --no-build --output .
+        run: dotnet pack --configuration Release /p:Version=${{ needs.get-versions.next-version }} --no-build --output .
 
       - name: Publish Agent
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
@@ -51,8 +61,13 @@ jobs:
           folder: 'out'
           recursive: true
 
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release
+          path: out/ResurrectedTrade.exe
+
       - name: Create latest version file
-        run: echo ${{ steps.semvers.outputs.patch }} >ResurrectedTrade.exe.latest.txt
+        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.get-versions.next-version }}
 
       - name: Upload Agent latest
         id: upload_agent_latest
@@ -74,7 +89,7 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: out/ResurrectedTrade.exe
-          remotePath: ResurrectedTrade-${{ steps.semvers.outputs.patch }}.exe
+          remotePath: ResurrectedTrade-${{ needs.get-versions.next-version }}.exe
 
       - name: Update latest version
         id: upload_version
@@ -86,13 +101,15 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: ResurrectedTrade.exe.latest.txt
           remotePath: ResurrectedTrade.exe.latest.txt
-
+  tag:
+    name: get-versions
+    runs-on: ubuntu-latest
 #      - name: Push Common
-#        run: dotnet nuget push ResurrectedTrade.Common.${{ steps.semvers.outputs.patch }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.get-versions.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
 #
 #      - name: Push Agent Base
-#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ steps.semvers.outputs.patch }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.get-versions.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
 #
 #      - uses: rickstaa/action-create-tag@v1
 #        with:
-#          tag: v${{ steps.semvers.outputs.patch }}
+#          tag: v${{ needs.get-versions.next-version }}
