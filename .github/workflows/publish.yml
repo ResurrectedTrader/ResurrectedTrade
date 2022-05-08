@@ -61,6 +61,9 @@ jobs:
         uses: DanaBear/code-sign-action@v4
         with:
           certificate: ${{ secrets.SIGNING_CERTIFICATE }}
+          password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+          certificatesha1: ${{ secrets.SIGNING_CERTIFICATE_FINGERPRINT }}
+          certificatename: ${{ secrets.SIGNING_CERTIFICATE_NAME }}
           folder: out
           recursive: false
 
@@ -81,7 +84,7 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: out/ResurrectedTrade.exe
-          remotePath: ResurrectedTrade.exe
+          remotePath: uploads/ResurrectedTrade.exe
 
       - name: Upload Agent versioned
         id: upload_agent_versioned
@@ -92,7 +95,7 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: out/ResurrectedTrade.exe
-          remotePath: ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
+          remotePath: uploads/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
 
       - name: Update latest version
         id: upload_version
@@ -103,7 +106,7 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: ResurrectedTrade.exe.latest.txt
-          remotePath: ResurrectedTrade.exe.latest.txt
+          remotePath: uploads/ResurrectedTrade.exe.latest.txt
 #  #  tag:
 #  #    name: versions
 #  #    runs-on: ubuntu-latest
