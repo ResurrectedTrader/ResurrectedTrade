@@ -58,9 +58,10 @@ jobs:
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
 
       - name: Sign Agent binaries
-        uses: apptim/code-sign-action@v7
+        uses: InertiaSystems/code-sign-action@v1.1.0
         with:
           certificate: ${{ secrets.SIGNING_CERTIFICATE }}
+          description: 'Resurrected Trade Agent ${{ needs.versions.outputs.next-version }}'
           password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
           certificatesha1: ${{ secrets.SIGNING_CERTIFICATE_FINGERPRINT }}
           certificatename: ${{ secrets.SIGNING_CERTIFICATE_NAME }}

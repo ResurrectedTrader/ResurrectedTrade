@@ -363,7 +363,7 @@ namespace ResurrectedTrade.Agent
                 {
                     var result = Spin(
                         client.GetStringAsync("https://resurrected.trade/downloads/ResurrectedTrade.exe.latest.txt")
-                    );
+                    ).Trim().TrimEnd('\r', '\n').Trim();
                     var latestVersion = new Version(result);
                     var myVersion = GetType().Assembly.GetName().Version;
                     _logger.Info($"Latest available version: {latestVersion}, our version {myVersion}");
