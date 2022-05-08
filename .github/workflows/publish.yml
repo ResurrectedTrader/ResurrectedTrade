@@ -9,8 +9,8 @@ jobs:
     name: Get current and next semver
     runs-on: ubuntu-latest
     outputs:
-      curver: steps.previoustag.outputs.tag
-      nextver: steps.semvers.outputs.patch
+      curver: ${{ steps.previoustag.outputs.tag }}
+      nextver: ${{ steps.semvers.outputs.patch }}
     steps:
       - uses: actions/checkout@v2
         with:
