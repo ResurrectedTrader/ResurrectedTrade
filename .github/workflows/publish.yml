@@ -6,7 +6,7 @@ on: [workflow_dispatch]
 #      - main # Default release branch, may also be named 'master' or 'develop'
 jobs:
   versions:
-    name: Get current and next semver
+    name: Get versions
     runs-on: ubuntu-latest
     outputs:
       current-version: ${{ steps.previous-tag.outputs.tag }}
@@ -31,81 +31,79 @@ jobs:
       - name: Print versions
         run: 'echo "Current version: ${{ steps.previous-tag.outputs.tag }}, next version: ${{ steps.sem-version.outputs.patch }}"'
 
-  build-nuget:
-    name: build nuget
+  build-and-publish:
+    name: Build and publish
     runs-on: ubuntu-latest
     needs: versions
     steps:
-      - name: Print versions
-        run: 'echo Current version: ${{ needs.versions.outputs.current-version }}, next version: ${{ needs.versions.outputs.next-version }}'
-#      - uses: actions/checkout@v2
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Setup dotnet
-#        uses: actions/setup-dotnet@v1
-#        with:
-#          dotnet-version: 3.1.200
-#
-#      - name: Build
-#        run: dotnet build --configuration Release /p:Version=${{ needs.versions.outputs.next-version }}
-#
-#      - name: Test
-#        run: dotnet test --configuration Release /p:Version=${{ needs.versions.outputs.next-version }} --no-build
-#
-#      - name: Pack
-#        run: dotnet pack --configuration Release /p:Version=${{ needs.versions.outputs.next-version }} --no-build --output .
-#
-#      - name: Publish Agent
-#        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
-#
-#      - name: Sign Agent binaries
-#        uses: dlemstra/code-sign-action@v1
-#        with:
-#          certificate: ${{ secrets.SIGNING_CERTIFICATE }}
-#          folder: out
-#          recursive: true
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: release
-#          path: out/ResurrectedTrade.exe
-#
-#      - name: Create latest version file
-#        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.outputs.next-version }}
-#
-#      - name: Upload Agent latest
-#        id: upload_agent_latest
-#        uses: Creepios/sftp-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SFTP_HOST }}
-#          port: ${{ secrets.SFTP_PORT }}
-#          username: ${{ secrets.SFTP_USERNAME }}
-#          password: ${{ secrets.SFTP_PASSWORD }}
-#          localPath: out/ResurrectedTrade.exe
-#          remotePath: ResurrectedTrade.exe
-#
-#      - name: Upload Agent versioned
-#        id: upload_agent_versioned
-#        uses: Creepios/sftp-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SFTP_HOST }}
-#          port: ${{ secrets.SFTP_PORT }}
-#          username: ${{ secrets.SFTP_USERNAME }}
-#          password: ${{ secrets.SFTP_PASSWORD }}
-#          localPath: out/ResurrectedTrade.exe
-#          remotePath: ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
-#
-#      - name: Update latest version
-#        id: upload_version
-#        uses: Creepios/sftp-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SFTP_HOST }}
-#          port: ${{ secrets.SFTP_PORT }}
-#          username: ${{ secrets.SFTP_USERNAME }}
-#          password: ${{ secrets.SFTP_PASSWORD }}
-#          localPath: ResurrectedTrade.exe.latest.txt
-#          remotePath: ResurrectedTrade.exe.latest.txt
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.200
+
+      - name: Build
+        run: dotnet build --configuration Release /p:Version=${{ needs.versions.outputs.next-version }}
+
+      - name: Test
+        run: dotnet test --configuration Release /p:Version=${{ needs.versions.outputs.next-version }} --no-build
+
+      - name: Pack
+        run: dotnet pack --configuration Release /p:Version=${{ needs.versions.outputs.next-version }} --no-build --output .
+
+      - name: Publish Agent
+        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
+
+      - name: Sign Agent binaries
+        uses: dlemstra/code-sign-action@v1
+        with:
+          certificate: ${{ secrets.SIGNING_CERTIFICATE }}
+          folder: out
+          recursive: true
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release
+          path: out/ResurrectedTrade.exe
+
+      - name: Create latest version file
+        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.outputs.next-version }}
+
+      - name: Upload Agent latest
+        id: upload_agent_latest
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localPath: out/ResurrectedTrade.exe
+          remotePath: ResurrectedTrade.exe
+
+      - name: Upload Agent versioned
+        id: upload_agent_versioned
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localPath: out/ResurrectedTrade.exe
+          remotePath: ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
+
+      - name: Update latest version
+        id: upload_version
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localPath: ResurrectedTrade.exe.latest.txt
+          remotePath: ResurrectedTrade.exe.latest.txt
 #  #  tag:
 #  #    name: versions
 #  #    runs-on: ubuntu-latest
