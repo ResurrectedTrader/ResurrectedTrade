@@ -58,7 +58,7 @@ jobs:
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
 
       - name: Sign Agent binaries
-        uses: DanaBear/code-sign-action@v4
+        uses: Dana-Prajea/code-sign-action@v4
         with:
           certificate: ${{ secrets.SIGNING_CERTIFICATE }}
           password: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
