@@ -39,12 +39,58 @@ jobs:
       - name: Pack
         run: dotnet pack --configuration Release /p:Version=${{ steps.semvers.outputs.patch }} --no-build --output .
 
-      - name: Push Common
-        run: dotnet nuget push ResurrectedTrade.Common.${{ steps.semvers.outputs.patch }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+      - name: Publish Agent
+        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
 
-      - name: Push Agent
-        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ steps.semvers.outputs.patch }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+      - name: Sign Agent binaries
+        uses: dlemstra/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.SIGNING_CERTIFICATE }}'
+          folder: 'out'
+          recursive: true
 
-      - uses: rickstaa/action-create-tag@v1
-        with:          
-          tag: v${{ steps.semvers.outputs.patch }}
+      - name: Create latest version file
+        run: echo ${{ steps.semvers.outputs.patch }} >ResurrectedTrade.exe.latest.txt
+
+      - name: Upload Agent latest
+        id: upload_agent_latest
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localPath: out/ResurrectedTrade.exe
+          remotePath: ResurrectedTrade.exe
+
+      - name: Upload Agent versioned
+        id: upload_agent_versioned
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localPath: out/ResurrectedTrade.exe
+          remotePath: ResurrectedTrade-${{ steps.semvers.outputs.patch }}.exe
+
+      - name: Update latest version
+        id: upload_version
+        uses: Creepios/sftp-action@v1.0.3q
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localPath: ResurrectedTrade.exe.latest.txt
+          remotePath: ResurrectedTrade.exe.latest.txt
+
+#      - name: Push Common
+#        run: dotnet nuget push ResurrectedTrade.Common.${{ steps.semvers.outputs.patch }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#
+#      - name: Push Agent Base
+#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ steps.semvers.outputs.patch }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+#
+#      - uses: rickstaa/action-create-tag@v1
+#        with:
+#          tag: v${{ steps.semvers.outputs.patch }}
