@@ -33,7 +33,7 @@ jobs:
 
   build-nuget:
     name: build nuget
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: versions
     steps:
       - name: Print versions
