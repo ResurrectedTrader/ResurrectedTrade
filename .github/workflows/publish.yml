@@ -5,12 +5,12 @@ on: [workflow_dispatch]
 #    branches:
 #      - main # Default release branch, may also be named 'master' or 'develop'
 jobs:
-  get-versions:
+  versions:
     name: Get current and next semver
     runs-on: ubuntu-latest
     outputs:
-      current-version: steps.previoustag.outputs.tag
-      next-version: steps.semvers.outputs.patch
+      curver: steps.previoustag.outputs.tag
+      nextver: steps.semvers.outputs.patch
     steps:
       - uses: actions/checkout@v2
         with:
@@ -28,10 +28,11 @@ jobs:
         with:
           version: ${{ steps.previoustag.outputs.tag }}
 
-  publish:
-    name: build, pack & publish
+
+  build-nuget:
+    name: build nuget
     runs-on: windows-latest
-    needs: get-versions
+    needs: versions
     steps:
       - uses: actions/checkout@v2
         with:
@@ -43,13 +44,13 @@ jobs:
           dotnet-version: 3.1.200
 
       - name: Build
-        run: dotnet build --configuration Release /p:Version=${{ needs.get-versions.next-version }}
+        run: dotnet build --configuration Release /p:Version=${{ needs.versions.nextver }}
 
       - name: Test
-        run: dotnet test --configuration Release /p:Version=${{ needs.get-versions.next-version }} --no-build
+        run: dotnet test --configuration Release /p:Version=${{ needs.versions.nextver }} --no-build
 
       - name: Pack
-        run: dotnet pack --configuration Release /p:Version=${{ needs.get-versions.next-version }} --no-build --output .
+        run: dotnet pack --configuration Release /p:Version=${{ needs.versions.nextver }} --no-build --output .
 
       - name: Publish Agent
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
@@ -67,7 +68,7 @@ jobs:
           path: out/ResurrectedTrade.exe
 
       - name: Create latest version file
-        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.get-versions.next-version }}
+        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.nextver }}
 
       - name: Upload Agent latest
         id: upload_agent_latest
@@ -89,7 +90,7 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: out/ResurrectedTrade.exe
-          remotePath: ResurrectedTrade-${{ needs.get-versions.next-version }}.exe
+          remotePath: ResurrectedTrade-${{ needs.versions.nextver }}.exe
 
       - name: Update latest version
         id: upload_version
@@ -101,15 +102,15 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localPath: ResurrectedTrade.exe.latest.txt
           remotePath: ResurrectedTrade.exe.latest.txt
-#  tag:
-#    name: get-versions
-#    runs-on: ubuntu-latest
-#      - name: Push Common
-#        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.get-versions.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#
-#      - name: Push Agent Base
-#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.get-versions.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#
-#      - uses: rickstaa/action-create-tag@v1
-#        with:
-#          tag: v${{ needs.get-versions.next-version }}
+  #  tag:
+  #    name: versions
+  #    runs-on: ubuntu-latest
+  #      - name: Push Common
+  #        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.nextver }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+  #
+  #      - name: Push Agent Base
+  #        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.nextver }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+  #
+  #      - uses: rickstaa/action-create-tag@v1
+  #        with:
+  #          tag: v${{ needs.versions.nextver }}
