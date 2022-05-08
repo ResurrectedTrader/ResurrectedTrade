@@ -1,6 +1,6 @@
 # ResurrectedTrade
 
-Base libraries (and soon standalone client) for integration with resurrected.trade.
+Base libraries (for integration) as well as standalone client for resurrected.trade.
 
 # What's resurrected.trade?
 
