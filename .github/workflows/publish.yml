@@ -68,11 +68,6 @@ jobs:
           folder: out
           recursive: false
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: release
-          path: out/ResurrectedTrade.exe
-
       - name: Create latest version file
         run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.outputs.next-version }}
 
