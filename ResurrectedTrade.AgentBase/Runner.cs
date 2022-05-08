@@ -46,7 +46,7 @@ namespace ResurrectedTrade.AgentBase
                 .ToListAsync()
                 .Result
                 .ToDictionary(o => o.BattleTag, o => o);
-            _logger.Log($"Got remote manifests: {remoteManifests.Count}");
+            _logger.Info($"Got remote manifests: {remoteManifests.Count}");
             _manifests = remoteManifests;
             _previousHash.Clear();
         }
@@ -61,7 +61,7 @@ namespace ResurrectedTrade.AgentBase
             return GetExport(process.Handle, process.MainModule.BaseAddress);
         }
 
-        public Export GetExport(Ptr handle, Ptr baseAddress)
+        public Export GetExport(Ptr handle, Ptr baseAddress, bool replace = false)
         {
             if (_manifests == null) throw new ApplicationException("No manifests found");
             var access = new RemoteMemoryAccess(handle, baseAddress);
@@ -82,10 +82,11 @@ namespace ResurrectedTrade.AgentBase
 
             _manifests.TryGetValue(battleTag, out var manifest);
 
-            var accountExport = capture.GetExport(manifest, isOnline: isOnline);
+            var accountExport = capture.GetExport(manifest, replace: replace, isOnline: isOnline);
             if (accountExport != null)
             {
-                _logger.Log($"Export {accountExport} {battleTag}");
+                _logger.Info($"Export {battleTag} {string.Join(", ", accountExport.Characters.Select(o => o.Name))}");
+                _logger.Debug($"Export: {accountExport}");
                 accountExport.BattleTag = battleTag;
 
                 var region = (string)Registry.GetValue(
@@ -175,7 +176,7 @@ namespace ResurrectedTrade.AgentBase
             if ((!_previousHash.TryGetValue(accountExport.BattleTag, out int prevHash) ||
                  prevHash != accountExportHash) && (debounce ?? _debounce))
             {
-                _logger.Log("Debouncing...");
+                _logger.Debug("Debouncing...");
                 _previousHash[accountExport.BattleTag] = accountExportHash;
                 return new SubmitOutcome
                 {
@@ -183,9 +184,8 @@ namespace ResurrectedTrade.AgentBase
                 };
             }
 
-            _logger.Log("Exporting...");
             var response = SendExport(accountExport);
-            _logger.Log($"Got manifest: {response.NewManifest}");
+            _logger.Debug($"Got new manifest: {response.NewManifest}");
             _manifests[accountExport.BattleTag] = response.NewManifest;
             _debounce = response.ShouldDebounce;
 
@@ -202,9 +202,9 @@ namespace ResurrectedTrade.AgentBase
         private ExportResponse SendExport(Export export)
         {
             var start = Stopwatch.StartNew();
-            _logger.Log($"Posting {export.BattleTag} {string.Join(" ", export.Characters.Select(o => o.Name))}");
+            _logger.Info($"Posting {export.BattleTag} {string.Join(", ", export.Characters.Select(o => o.Name))}");
             var response = _client.SubmitExport(export);
-            _logger.Log($"Success in {start.ElapsedMilliseconds}ms");
+            _logger.Info($"Finished in {start.ElapsedMilliseconds}ms, Success: {response.Success}, ErrorId: {response.ErrorId}, Error: {response.ErrorMessage}, Cooldown: {response.CooldownMilliseconds}, Debounce: {response.ShouldDebounce}");
             return response;
         }
     }

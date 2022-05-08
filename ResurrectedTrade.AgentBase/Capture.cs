@@ -85,12 +85,12 @@ namespace ResurrectedTrade.AgentBase
                     int exportHash = itemExport.Item.Hash();
                     if (!positionToHash.TryGetValue(itemExport.Position, out int hash))
                     {
-                        _logger.Log($"Will add {itemExport.Position}");
+                        _logger.Debug($"Will add {itemExport.Position}");
                         export.Adds.Add(itemExport);
                     }
                     else if (hash != exportHash || replace)
                     {
-                        _logger.Log($"Will replace {itemExport.Position}");
+                        _logger.Debug($"Will replace {itemExport.Position}");
                         export.Removes.Add(itemExport.Position);
                         export.Adds.Add(itemExport);
                     }
@@ -101,7 +101,7 @@ namespace ResurrectedTrade.AgentBase
 
             foreach (uint position in positionToHash.Keys)
             {
-                _logger.Log($"Will remove {position}");
+                _logger.Debug($"Will remove {position}");
                 export.Removes.Add(position);
             }
 
@@ -112,6 +112,7 @@ namespace ResurrectedTrade.AgentBase
             Unit player, CharacterManifest manifest, CharFlag charFlags, bool replace = false
         )
         {
+            var playerName = player.PlayerData.Name;
             List<GridExport> charGrids = new List<GridExport>();
             foreach (var gridType in SupportedGrids)
             {
@@ -128,7 +129,7 @@ namespace ResurrectedTrade.AgentBase
 
                 if (export.Adds.Any() || export.Removes.Any())
                 {
-                    _logger.Log($"{gridType} changed");
+                    _logger.Info($"{playerName} {gridType} changed");
                     export.Grid = gridType.ToProtocol();
                     charGrids.Add(export);
                 }
@@ -142,7 +143,7 @@ namespace ResurrectedTrade.AgentBase
                 GridExport export = GetGridExport(grid, gridManifest, replace);
                 if (export.Adds.Any() || export.Removes.Any())
                 {
-                    _logger.Log("Mercenery changed");
+                    _logger.Info($"Something changed in mercenery of {playerName}");
                     export.Grid = Protocol.Grid.Mercenary;
                     charGrids.Add(export);
                 }
@@ -151,7 +152,7 @@ namespace ResurrectedTrade.AgentBase
             var charExport = new CharacterExport
             {
                 Class = player.ClassId,
-                Name = player.PlayerData.Name,
+                Name = playerName,
                 Flags = (uint)charFlags,
                 Stats =
                 {
@@ -166,8 +167,8 @@ namespace ResurrectedTrade.AgentBase
             bool hashMismatch = manifest == null || charExport.Hash() != manifest.Hash;
             if (hashMismatch || charExport.Grids.Any())
             {
-                _logger.Log(
-                    $"Something in char {charExport.Name}: {hashMismatch} {charExport.Grids.Any()} {manifest == null}"
+                _logger.Info(
+                    $"Something in char {charExport.Name}: hash mismatch: {hashMismatch} grids: {charExport.Grids.Any()} manifest: {manifest != null}"
                 );
                 return charExport;
             }
@@ -176,7 +177,7 @@ namespace ResurrectedTrade.AgentBase
         }
 
         private CharacterExport GetSharedStashExport(
-            string stashName, Unit sharedStash, CharacterManifest manifest, uint charFlags, bool ignoreExisting = false
+            string stashName, Unit sharedStash, CharacterManifest manifest, uint charFlags, bool replace = false
         )
         {
             var charExport = new CharacterExport
@@ -195,10 +196,10 @@ namespace ResurrectedTrade.AgentBase
 
             GridManifest gridManifest = manifest?.Grids.FirstOrDefault(o => o.Grid == Protocol.Grid.Stash);
             var grid = sharedStash.Inventory.GetGrid(Grid.Stash);
-            GridExport export = GetGridExport(grid, gridManifest, ignoreExisting);
+            GridExport export = GetGridExport(grid, gridManifest, replace);
             if (export.Adds.Any() || export.Removes.Any())
             {
-                _logger.Log($"Shared stash {stashName} changed");
+                _logger.Info($"Shared stash {stashName} changed");
                 export.Grid = Protocol.Grid.Stash;
                 charExport.Grids.Add(export);
             }
@@ -206,8 +207,8 @@ namespace ResurrectedTrade.AgentBase
             bool hashMismatch = manifest == null || charExport.Hash() != manifest.Hash;
             if (hashMismatch || charExport.Grids.Any())
             {
-                _logger.Log(
-                    $"Something changed in stash {stashName}: {hashMismatch} {charExport.Grids.Any()} {manifest == null} {manifest?.Hash} {charExport.Hash()}"
+                _logger.Info(
+                    $"Something changed in stash {stashName}: hash mismatch: {hashMismatch} grids: {charExport.Grids.Any()} manifest: {manifest != null}"
                 );
                 return charExport;
             }
@@ -221,27 +222,27 @@ namespace ResurrectedTrade.AgentBase
             var states = _access.Read<D2UIStates>(_access.BaseAddress + _offsets.UIState);
             if (!states.InGame || states.LoadScreenVisible)
             {
-                _logger.Log($"Not in game {states.InGame}, or in load screen {states.LoadScreenVisible}");
+                _logger.Debug($"Not in game {states.InGame}, or in load screen {states.LoadScreenVisible}");
                 return null;
             }
 
             var player = GetPlayerUnit();
             if (player == null)
             {
-                _logger.Log("No player...");
+                _logger.Debug("No player...");
                 return null;
             }
 
             if (!player.IsFullyLoaded())
             {
-                _logger.Log("Player not fully loaded...");
+                _logger.Debug("Player not fully loaded...");
                 return null;
             }
 
             // Don't submit while items are on cursor, otherwise we can't detect moves.
             if (player.Inventory.Struct.pCursorItem != Ptr.Zero)
             {
-                _logger.Log("Item in cursor...");
+                _logger.Debug("Item in cursor...");
                 return null;
             }
 
@@ -363,13 +364,14 @@ namespace ResurrectedTrade.AgentBase
                             Character = exportCharacter.Name,
                             GridPosition = new GridPosition
                             {
-                                Grid = exportCharacterGrid.Grid, Position = itemExport.Position
+                                Grid = exportCharacterGrid.Grid,
+                                Position = itemExport.Position
                             }
                         };
 
                         if (taken.Contains(location))
                         {
-                            _logger.Log($"Trying to add to a taken position: {location}");
+                            _logger.Debug($"Trying to add to a taken position: {location}");
                         }
                     }
                 }
@@ -419,7 +421,7 @@ namespace ResurrectedTrade.AgentBase
                             }
                         };
                         removes.Add((location, locationToHash[location]));
-                        _logger.Log($"Removed {removes.Last()}");
+                        _logger.Debug($"Removed {removes.Last()}");
                     }
 
                     foreach (ItemExport itemExport in exportCharacterGrid.Adds)
@@ -433,7 +435,7 @@ namespace ResurrectedTrade.AgentBase
                             }
                         };
                         adds.Add((location, itemExport.Item.Hash()));
-                        _logger.Log($"Add {adds.Last()}");
+                        _logger.Debug($"Add {adds.Last()}");
                     }
                 }
             }
@@ -445,7 +447,7 @@ namespace ResurrectedTrade.AgentBase
                 if (addLocation == null)
                 {
                     // Can't find the remove with the same hash, probably genuinely new.
-                    _logger.Log($"Cannot find add for {removeHash}");
+                    _logger.Debug($"Cannot find add for {removeHash}");
                     continue;
                 }
 
@@ -461,11 +463,11 @@ namespace ResurrectedTrade.AgentBase
                         .Removes
                         .Remove(removeLocation.GridPosition.Position))
                 {
-                    _logger.Log($"Failed to remove the remove {removeLocation}");
+                    _logger.Debug($"Failed to remove the remove {removeLocation}");
                 }
                 else
                 {
-                    _logger.Log($"Removed the remove {removeLocation}");
+                    _logger.Debug($"Removed the remove {removeLocation}");
                 }
 
                 // Remove the add
@@ -478,12 +480,12 @@ namespace ResurrectedTrade.AgentBase
                 foreach (ItemExport itemExport in grid.Adds
                              .Where(o => o.Position == addLocation.GridPosition.Position).ToList())
                 {
-                    _logger.Log($"Removing add {addLocation}");
+                    _logger.Debug($"Removing add {addLocation}");
                     grid.Adds.Remove(itemExport);
                 }
 
                 // Replace with move
-                _logger.Log(
+                _logger.Debug(
                     $"Move from {removeLocation.Character} {removeLocation.GridPosition.Grid} {removeLocation.GridPosition.Position} to {addLocation.Character} {addLocation.GridPosition.Grid} {addLocation.GridPosition.Position}"
                 );
 
