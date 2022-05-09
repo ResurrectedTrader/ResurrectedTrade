@@ -1,9 +1,6 @@
 name: Release
 on: [workflow_dispatch]
-#on:
-#  push:
-#    branches:
-#      - main # Default release branch, may also be named 'master' or 'develop'
+
 jobs:
   versions:
     name: Get versions
@@ -54,8 +51,17 @@ jobs:
       - name: Pack
         run: dotnet pack --configuration Release /p:Version=${{ needs.versions.outputs.next-version }} --no-build --output .
 
-      - name: Publish Agent
+      - name: Publish Agent Framework Dependant
         run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release --no-self-contained --no-build --output out
+
+      - name: Move framework dependant
+        run: Move-Item out/ResurrectedTrade.exe out/ResurrectedTrade-FrameworkDependant.exe
+
+      - name: Publish Agent Self-Contained
+        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release /p:DefineConstants=SELF_CONTAINED --self-contained --no-build --output out
+
+      - name: Move self contained
+        run: Move-Item out/ResurrectedTrade.exe out/ResurrectedTrade-SelfContained.exe
 
       - name: Sign Agent binaries
         uses: InertiaSystems/code-sign-action@v1.1.0
@@ -69,56 +75,13 @@ jobs:
           folder: out
           recursive: false
 
-      - name: Create latest version file
-        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.outputs.next-version }}
-
-      - name: Create latest version file
-        run: Copy-Item out/ResurrectedTrade.exe -Destination out/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
-#
-#      - name: Upload Agent latest
-#        id: upload_agent_latest
-#        uses: Creepios/sftp-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SFTP_HOST }}
-#          port: ${{ secrets.SFTP_PORT }}
-#          username: ${{ secrets.SFTP_USERNAME }}
-#          password: ${{ secrets.SFTP_PASSWORD }}
-#          localPath: out/ResurrectedTrade.exe
-#          remotePath: uploads/ResurrectedTrade.exe
-#
-#      - name: Upload Agent versioned
-#        id: upload_agent_versioned
-#        uses: Creepios/sftp-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SFTP_HOST }}
-#          port: ${{ secrets.SFTP_PORT }}
-#          username: ${{ secrets.SFTP_USERNAME }}
-#          password: ${{ secrets.SFTP_PASSWORD }}
-#          localPath: out/ResurrectedTrade.exe
-#          remotePath: uploads/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
-#
-#      - name: Update latest version
-#        id: upload_version
-#        uses: Creepios/sftp-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SFTP_HOST }}
-#          port: ${{ secrets.SFTP_PORT }}
-#          username: ${{ secrets.SFTP_USERNAME }}
-#          password: ${{ secrets.SFTP_PASSWORD }}
-#          localPath: ResurrectedTrade.exe.latest.txt
-#          remotePath: uploads/ResurrectedTrade.exe.latest.txt
-#
-#      - name: Push Common
-#        run: dotnet nuget push ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-#
-#      - name: Push Agent Base
-#        run: dotnet nuget push ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
-
       - uses: actions/upload-artifact@v2
         with:
           name: ResurrectedTrade Agent ${{ needs.versions.outputs.next-version }}
           if-no-files-found: error
-          path: out/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
+          path: |
+            out/ResurrectedTrade-SelfContained.exe
+            out/ResurrectedTrade-FrameworkDependant.exe
 
       - uses: actions/upload-artifact@v2
         with:
@@ -151,6 +114,7 @@ jobs:
           tag_name: v${{ needs.versions.outputs.next-version }}
           fail_on_unmatched_files: true
           files: |
-            ResurrectedTrade Agent ${{ needs.versions.outputs.next-version }}/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
+            ResurrectedTrade Agent ${{ needs.versions.outputs.next-version }}/ResurrectedTrade-SelfContained.exe
+            ResurrectedTrade Agent ${{ needs.versions.outputs.next-version }}/ResurrectedTrade-FrameworkDependant.exe
             ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg
             ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg
