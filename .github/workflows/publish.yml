@@ -69,8 +69,11 @@ jobs:
           folder: out
           recursive: false
 
-#      - name: Create latest version file
-#        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.outputs.next-version }}
+      - name: Create latest version file
+        run: Add-Content ResurrectedTrade.exe.latest.txt ${{ needs.versions.outputs.next-version }}
+
+      - name: Create latest version file
+        run: Copy-Item out/ResurrectedTrade.exe -Destination out/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
 #
 #      - name: Upload Agent latest
 #        id: upload_agent_latest
@@ -113,18 +116,17 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
-          path: out/ResurrectedTrade.exe
+          name: ResurrectedTrade Agent ${{ needs.versions.outputs.next-version }}
+          if-no-files-found: error
+          path: out/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
 
       - uses: actions/upload-artifact@v2
         with:
-          name: ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg
-          path: ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg
-          path: ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg
+          name: ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}
+          if-no-files-found: error
+          path: |
+            ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg
+            ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg
 
   tag-and-upload:
     name: Tag and upload assets
@@ -138,7 +140,7 @@ jobs:
       - uses: actions/download-artifact@v3
 
       - name: Display structure of downloaded files
-        run: ls -R
+        run: ls -R && exit 1
 
       - uses: rickstaa/action-create-tag@v1
         with:
@@ -150,6 +152,6 @@ jobs:
           tag_name: v${{ needs.versions.outputs.next-version }}
           fail_on_unmatched_files: true
           files: |
-            out/ResurrectedTrade.exe
-            ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg
-            ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg
+            ResurrectedTrade Agent ${{ needs.versions.outputs.next-version }}/ResurrectedTrade-${{ needs.versions.outputs.next-version }}.exe
+            ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg
+            ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg
