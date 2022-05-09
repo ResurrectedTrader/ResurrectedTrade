@@ -366,7 +366,7 @@ namespace ResurrectedTrade.Agent
                     ).Trim().TrimEnd('\r', '\n').Trim();
                     var latestVersion = new Version(result);
                     var myVersion = GetType().Assembly.GetName().Version;
-                    _logger.Info($"Latest available version: {latestVersion}, our version {myVersion}");
+                    _logger.Info($"Latest available version: {latestVersion}, our version {myVersion}, newer: {latestVersion > myVersion}");
                     if (latestVersion > myVersion)
                     {
                         void ClickHandler(object sender, EventArgs args)
