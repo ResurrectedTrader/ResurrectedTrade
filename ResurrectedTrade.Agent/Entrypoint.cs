@@ -12,6 +12,8 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -355,23 +357,43 @@ namespace ResurrectedTrade.Agent
             }
         }
 
+        internal class GithubRelease
+        {
+            [JsonPropertyName("tag_name")]
+            public string TagName { get; set; }
+        }
+
         private void CheckForUpdates()
         {
             try
             {
                 using (var client = new HttpClient())
                 {
+                    client.DefaultRequestHeaders.UserAgent.Add(
+                        new ProductInfoHeaderValue("ResurrectedTradeAgent", _version)
+                    );
                     var result = Spin(
-                        client.GetStringAsync("https://resurrected.trade/downloads/ResurrectedTrade.exe.latest.txt")
-                    ).Trim().TrimEnd('\r', '\n').Trim();
-                    var latestVersion = new Version(result);
+                        client.GetStringAsync(
+                            "https://api.github.com/repos/ResurrectedTrader/ResurrectedTrade/releases/latest"
+                        )
+                    );
+                    var release = JsonSerializer.Deserialize<GithubRelease>(result);
+                    var latestVersion = new Version(release.TagName.TrimStart('v'));
                     var myVersion = GetType().Assembly.GetName().Version;
-                    _logger.Info($"Latest available version: {latestVersion}, our version {myVersion}, newer: {latestVersion > myVersion}");
+                    _logger.Info(
+                        $"Latest available version: {latestVersion}, our version {myVersion}, newer: {latestVersion > myVersion}"
+                    );
                     if (latestVersion > myVersion)
                     {
                         void ClickHandler(object sender, EventArgs args)
                         {
-                            var uri = $"https://resurrected.trade/downloads/ResurrectedTrade-{latestVersion}.exe";
+#if SELF_CONTAINED
+                            var uri =
+ $"https://github.com/ResurrectedTrader/ResurrectedTrade/releases/download/v{latestVersion}/ResurrectedTrade-SelfContained.exe";
+#else
+                            var uri =
+                                $"https://github.com/ResurrectedTrader/ResurrectedTrade/releases/download/v{latestVersion}/ResurrectedTrade-FrameworkDependant.exe";
+#endif
                             _logger.Info($"Downloading {uri}");
                             Utils.OpenUrl(uri);
                             _notifyIcon.BalloonTipClicked -= ClickHandler;
