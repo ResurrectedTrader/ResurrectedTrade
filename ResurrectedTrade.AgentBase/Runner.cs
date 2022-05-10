@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Win32;
 using ResurrectedTrade.AgentBase.Memory;
@@ -38,13 +39,14 @@ namespace ResurrectedTrade.AgentBase
             _client = client;
         }
 
-        public void Initialize()
+        public async Task Initialize()
         {
-            var remoteManifests = _client
-                .GetManifests(new Empty())
-                .ResponseStream
-                .ToListAsync()
-                .Result
+            var remoteManifests = (
+                    await _client
+                        .GetManifests(new Empty())
+                        .ResponseStream
+                        .ToListAsync()
+                )
                 .ToDictionary(o => o.BattleTag, o => o);
             _logger.Info($"Got remote manifests: {remoteManifests.Count}");
             _manifests = remoteManifests;
@@ -170,7 +172,7 @@ namespace ResurrectedTrade.AgentBase
             return accountExport;
         }
 
-        public SubmitOutcome SubmitExport(Export accountExport, bool? debounce = null)
+        public async Task<SubmitOutcome> SubmitExport(Export accountExport, bool? debounce = null)
         {
             var accountExportHash = accountExport.Hash();
             if ((!_previousHash.TryGetValue(accountExport.BattleTag, out int prevHash) ||
@@ -184,7 +186,7 @@ namespace ResurrectedTrade.AgentBase
                 };
             }
 
-            var response = SendExport(accountExport);
+            var response = await SendExport(accountExport);
             _logger.Debug($"Got new manifest: {response.NewManifest}");
             _manifests[accountExport.BattleTag] = response.NewManifest;
             _debounce = response.ShouldDebounce;
@@ -199,12 +201,14 @@ namespace ResurrectedTrade.AgentBase
             };
         }
 
-        private ExportResponse SendExport(Export export)
+        private async Task<ExportResponse> SendExport(Export export)
         {
             var start = Stopwatch.StartNew();
             _logger.Info($"Posting {export.BattleTag} {string.Join(", ", export.Characters.Select(o => o.Name))}");
-            var response = _client.SubmitExport(export);
-            _logger.Info($"Finished in {start.ElapsedMilliseconds}ms, Success: {response.Success}, ErrorId: {response.ErrorId}, Error: {response.ErrorMessage}, Cooldown: {response.CooldownMilliseconds}, Debounce: {response.ShouldDebounce}");
+            var response = await _client.SubmitExportAsync(export);
+            _logger.Info(
+                $"Finished in {start.ElapsedMilliseconds}ms, Success: {response.Success}, ErrorId: {response.ErrorId}, Error: {response.ErrorMessage}, Cooldown: {response.CooldownMilliseconds}, Debounce: {response.ShouldDebounce}"
+            );
             return response;
         }
     }

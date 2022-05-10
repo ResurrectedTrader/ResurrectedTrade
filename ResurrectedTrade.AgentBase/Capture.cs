@@ -31,6 +31,7 @@ namespace ResurrectedTrade.AgentBase
             271, // A1
             338, // A2
             359, // A3
+            560, // A5
             561 // A5
         };
 
@@ -85,12 +86,10 @@ namespace ResurrectedTrade.AgentBase
                     int exportHash = itemExport.Item.Hash();
                     if (!positionToHash.TryGetValue(itemExport.Position, out int hash))
                     {
-                        _logger.Debug($"Will add {itemExport.Position}");
                         export.Adds.Add(itemExport);
                     }
                     else if (hash != exportHash || replace)
                     {
-                        _logger.Debug($"Will replace {itemExport.Position}");
                         export.Removes.Add(itemExport.Position);
                         export.Adds.Add(itemExport);
                     }
@@ -101,7 +100,6 @@ namespace ResurrectedTrade.AgentBase
 
             foreach (uint position in positionToHash.Keys)
             {
-                _logger.Debug($"Will remove {position}");
                 export.Removes.Add(position);
             }
 

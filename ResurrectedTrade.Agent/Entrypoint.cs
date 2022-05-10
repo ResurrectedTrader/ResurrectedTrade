@@ -41,7 +41,7 @@ namespace ResurrectedTrade.Agent
         private readonly ProfileService.ProfileServiceClient _profileService;
 
         private readonly string _version;
-        private readonly ManualResetEvent _event = new ManualResetEvent(false);
+        private CancellationTokenSource _sleepCancellation = new CancellationTokenSource();
 
         private readonly Icon _whiteIcon;
         private readonly Icon _redIcon;
@@ -49,17 +49,6 @@ namespace ResurrectedTrade.Agent
         private readonly Icon _blueIcon;
 
         private readonly Logger _logger;
-
-        private void SpinSleep(int millis)
-        {
-            var deadline = DateTime.UtcNow + TimeSpan.FromMilliseconds(millis);
-            while (!_event.WaitOne(0) && deadline > DateTime.UtcNow)
-            {
-                Application.DoEvents();
-            }
-
-            _event.Reset();
-        }
 
         public Entrypoint()
         {
@@ -152,7 +141,7 @@ namespace ResurrectedTrade.Agent
                                 }
                             }
                         ) { Checked = _paused, },
-                        new ToolStripMenuItem("Log out", null, (sender, args) => Logout()),
+                        new ToolStripMenuItem("Log out", null, (sender, args) => _ = Logout()),
                         new ToolStripSeparator(),
                         new ToolStripMenuItem("Version")
                         {
@@ -169,7 +158,7 @@ namespace ResurrectedTrade.Agent
                 {
                     Items =
                     {
-                        new ToolStripMenuItem("Log in", null, (sender, args) => Login()),
+                        new ToolStripMenuItem("Log in", null, (sender, args) => _ = Login()),
                         new ToolStripSeparator(),
                         new ToolStripMenuItem("Version")
                         {
@@ -208,34 +197,16 @@ namespace ResurrectedTrade.Agent
         {
             _keepRunning = false;
             Application.Exit();
-            _event.Set();
+            _sleepCancellation.Cancel();
         }
 
-        private void Spin(Task task)
-        {
-            while (!task.IsCompleted)
-            {
-                Application.DoEvents();
-            }
-        }
-
-        private T Spin<T>(Task<T> task)
-        {
-            while (!task.IsCompleted)
-            {
-                Application.DoEvents();
-            }
-
-            return task.Result;
-        }
-
-        private State TryFetchProfile()
+        private async Task<State> TryFetchProfile()
         {
             if (Utils.HasValidCookie(_cookieContainer))
             {
                 try
                 {
-                    _profile = Spin(_profileService.GetProfileAsync(new Empty()).ResponseAsync);
+                    _profile = await _profileService.GetProfileAsync(new Empty());
                     Utils.SaveCookieContainer(_cookieContainer);
                     return State.Ok;
                 }
@@ -258,12 +229,12 @@ namespace ResurrectedTrade.Agent
             return State.NeedsAuth;
         }
 
-        private void WaitForProfile()
+        private async Task WaitForProfile()
         {
             _logger.Info($"Entering profile lookup loop in state: {_state}");
             while (_keepRunning && _profile == null)
             {
-                var newState = TryFetchProfile();
+                var newState = await TryFetchProfile();
                 if (newState == State.Ok && _profile != null)
                 {
                     _logger.Info("Retreived profile");
@@ -280,23 +251,29 @@ namespace ResurrectedTrade.Agent
 
                 _logger.Info($"Current state is {newState}");
                 _state = newState;
-                SpinSleep(30000);
+                await InterruptableSleep(30000);
             }
         }
 
-        public void Run()
+        private void ResetSleepCancellation()
         {
-            CheckForUpdates();
+            _sleepCancellation.Dispose();
+            _sleepCancellation = new CancellationTokenSource();
+        }
+
+        public async Task Run()
+        {
+            await CheckForUpdates();
             _state = State.Ok;
             try
             {
-                _state = TryFetchProfile();
+                _state = await TryFetchProfile();
                 if (_state == State.NeedsAuth)
                 {
-                    var result = Login();
+                    var result = await Login();
                     while (result == DialogResult.Retry)
                     {
-                        result = Login();
+                        result = await Login();
                     }
 
                     if (result == DialogResult.OK)
@@ -330,7 +307,7 @@ namespace ResurrectedTrade.Agent
             {
                 if (_profile == null)
                 {
-                    WaitForProfile();
+                    await WaitForProfile();
                     continue;
                 }
 
@@ -347,13 +324,29 @@ namespace ResurrectedTrade.Agent
 
                 try
                 {
-                    DoExports();
+                    await DoExports();
                 }
                 catch (Exception e)
                 {
                     _logger.Info($"Failed to get exports: {e}");
-                    SpinSleep(1000);
+                    await InterruptableSleep(1000);
                 }
+            }
+        }
+
+        private async Task InterruptableSleep(int duration)
+        {
+            try
+            {
+                await Task.Delay(duration, _sleepCancellation.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                ResetSleepCancellation();
+            }
+            catch (OperationCanceledException)
+            {
+                ResetSleepCancellation();
             }
         }
 
@@ -363,7 +356,7 @@ namespace ResurrectedTrade.Agent
             public string TagName { get; set; }
         }
 
-        private void CheckForUpdates()
+        private async Task CheckForUpdates()
         {
             try
             {
@@ -372,11 +365,10 @@ namespace ResurrectedTrade.Agent
                     client.DefaultRequestHeaders.UserAgent.Add(
                         new ProductInfoHeaderValue("ResurrectedTradeAgent", _version)
                     );
-                    var result = Spin(
+                    var result = await
                         client.GetStringAsync(
                             "https://api.github.com/repos/ResurrectedTrader/ResurrectedTrade/releases/latest"
-                        )
-                    );
+                        );
                     var release = JsonSerializer.Deserialize<GithubRelease>(result);
                     var latestVersion = new Version(release.TagName.TrimStart('v'));
                     var myVersion = GetType().Assembly.GetName().Version;
@@ -425,20 +417,14 @@ namespace ResurrectedTrade.Agent
             }
         }
 
-        private State DoExports()
+        private async Task<State> DoExports()
         {
             var runner = new Runner(Offsets.Instance, _logger, _agentService);
 
             try
             {
                 _logger.Info("Initializing runner...");
-                var task = Task.Run(() => runner.Initialize());
-                if (!task.IsCompletedSuccessfully)
-                {
-                    task.GetAwaiter().GetResult();
-                }
-
-                _logger.Info($"Initialized... {task.Exception}");
+                await runner.Initialize();
             }
             catch (Exception e)
             {
@@ -494,7 +480,7 @@ namespace ResurrectedTrade.Agent
                                 continue;
                             }
 
-                            var response = runner.SubmitExport(export);
+                            var response = await runner.SubmitExport(export);
                             if (response.Attempted)
                             {
                                 cooldown = Math.Max(cooldown, response.CooldownMilliseconds);
@@ -554,23 +540,23 @@ namespace ResurrectedTrade.Agent
                     }
                 }
 
-                SpinSleep(cooldown);
+                await InterruptableSleep(cooldown);
             }
 
             return _state;
         }
 
-        private void Logout()
+        private async Task Logout()
         {
             _logger.Info("Logging out...");
-            Spin(Task.Run(() => _profileService.Logout(new Empty())));
+            await _profileService.LogoutAsync(new Empty());
             _profile = null;
             _state = State.NeedsAuth;
-            _event.Set();
+            _sleepCancellation.Cancel();
             Utils.SaveCookieContainer(_cookieContainer);
         }
 
-        private DialogResult Login()
+        private async Task<DialogResult> Login()
         {
             var prompt = new LoginPrompt(_profileService);
             var outcome = prompt.ShowDialog();
@@ -584,10 +570,10 @@ namespace ResurrectedTrade.Agent
 
             try
             {
-                _profile = Spin(Task.Run(() => _profileService.GetProfile(new Empty())));
+                _profile = await _profileService.GetProfileAsync(new Empty());
                 _logger.Info("Successfully retrieved profile...");
                 _state = State.Ok;
-                _event.Set();
+                _sleepCancellation.Cancel();
             }
             catch (Exception e)
             {

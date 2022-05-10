@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Windows.Forms;
 using ResurrectedTrade.AgentBase;
 
 namespace ResurrectedTrade.Agent
@@ -19,7 +21,14 @@ namespace ResurrectedTrade.Agent
 
             using (var entrypoint = new Entrypoint())
             {
-                entrypoint.Run();
+                async void IdleHandler(object sender, EventArgs e)
+                {
+                    Application.Idle -= IdleHandler;
+                    await entrypoint.Run();
+                    Application.ExitThread();
+                }
+                Application.Idle += IdleHandler;
+                Application.Run();
             }
         }
     }
