@@ -8,6 +8,8 @@ namespace ResurrectedTrade.Agent
     {
         private readonly LinkedList<string> _buffer = new LinkedList<string>();
         private readonly int _bufferSize;
+        private string _previousMessage;
+        private int _previousCount;
         public event EventHandler Changed;
 
         public Logger(int bufferSize)
@@ -17,7 +19,26 @@ namespace ResurrectedTrade.Agent
 
         public void Info(string message)
         {
-            var msg = $"[{DateTime.Now:O}] {message}";
+            if (message == _previousMessage)
+            {
+                _previousCount++;
+                return;
+            }
+
+            if (_previousCount > 1)
+            {
+                Log($"Previous message repeated {_previousCount} times.");
+            }
+
+            _previousMessage = message;
+            _previousCount = 1;
+
+           Log(message);
+        }
+
+        private void Log(string msg)
+        {
+            msg = $"[{DateTime.Now:O}] {msg}";
             lock (this)
             {
                 _buffer.AddLast(msg);

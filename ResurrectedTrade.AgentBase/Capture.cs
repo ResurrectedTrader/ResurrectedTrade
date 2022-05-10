@@ -268,7 +268,7 @@ namespace ResurrectedTrade.AgentBase
             {
                 if (charFlags.HasFlag(CharFlag.Ladder))
                 {
-                    stashSuffix = "l";
+                    stashSuffix += "l";
                 }
             }
             else

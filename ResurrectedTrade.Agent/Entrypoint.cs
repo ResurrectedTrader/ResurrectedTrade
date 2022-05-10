@@ -408,10 +408,14 @@ namespace ResurrectedTrade.Agent
                         _notifyIcon.BalloonTipClicked += ClickHandler;
                         _notifyIcon.BalloonTipClosed += ClosedHandler;
 
+#if DEBUG
+                        _logger.Info("Skipping update prompt as debug build");
+#else
                         _notifyIcon.ShowBalloonTip(
                             30, "Resurrected Trade", "A new version is available, click here to download",
                             ToolTipIcon.None
                         );
+#endif
                     }
                 }
             }
