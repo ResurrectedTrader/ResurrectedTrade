@@ -86,7 +86,6 @@ namespace ResurrectedTrade.AgentBase.Structs
         [FieldOffset(0x38)] public readonly Ptr pPath;
         [FieldOffset(0x88)] public readonly Ptr pStatListEx;
         [FieldOffset(0x90)] public readonly Ptr pInventory;
-        [FieldOffset(0xD8)] public readonly uint UnkSortStashesBy;
         [FieldOffset(0x150)] public readonly Ptr pListNext;
     }
 }

@@ -11,7 +11,6 @@ namespace ResurrectedTrade.AgentBase.Structs
         {
         }
 
-        public uint Signature => Struct.Signature;
         public uint GridCount => Struct.nGridCount;
 
         public Unit FirstItem => ReadWrapped<Unit>(Struct.pFirstItem);
@@ -54,7 +53,6 @@ namespace ResurrectedTrade.AgentBase.Structs
     [StructLayout(LayoutKind.Explicit)]
     public readonly struct D2InventoryStrc
     {
-        [FieldOffset(0x00)] public readonly uint Signature;
         [FieldOffset(0x10)] public readonly Ptr pFirstItem;
         [FieldOffset(0x20)] public readonly Ptr pGrids;
         [FieldOffset(0x28)] public readonly uint nGridCount;

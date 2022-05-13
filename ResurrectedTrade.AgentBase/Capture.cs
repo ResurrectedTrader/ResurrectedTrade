@@ -511,6 +511,8 @@ namespace ResurrectedTrade.AgentBase
 
         public Unit GetPlayerUnit()
         {
+            var charFlags = (CharFlag)_access.Read<uint>(_access.BaseAddress + _offsets.CharFlags);
+            var expansionCharacter = charFlags.HasFlag(CharFlag.Expansion);
             foreach (var unit in GetPlayerUnits())
             {
                 if (unit.Type != UnitType.Player) continue;
@@ -521,7 +523,15 @@ namespace ResurrectedTrade.AgentBase
                 if (unit.StatList.HasState(186)) continue;
                 if (unit.Mode == 0) continue;
 
-                return unit;
+                // MAGIXXX
+                var userBaseOffset = expansionCharacter ? 0x70 : 0x30;
+                var checkUser = expansionCharacter ? 0 : 1;
+
+                var userBaseCheck = _access.Read<int>(unit.Struct.pInventory + userBaseOffset);
+                if (userBaseCheck != checkUser)
+                {
+                    return unit;
+                }
             }
 
             return null;
