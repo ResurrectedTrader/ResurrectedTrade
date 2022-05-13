@@ -114,10 +114,10 @@ jobs:
           tag: v${{ needs.versions.outputs.next-version }}
 
       - name: Push Common
-        run: dotnet nuget push ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+        run: dotnet nuget push "ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.Common.${{ needs.versions.outputs.next-version }}.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
 
       - name: Push Agent Base
-        run: dotnet nuget push ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
+        run: dotnet nuget push "ResurrectedTrade NuGet Packages ${{ needs.versions.outputs.next-version }}/ResurrectedTrade.AgentBase.${{ needs.versions.outputs.next-version }}.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_TOKEN }} --skip-duplicate
 
       - name: Upload assets to github
         uses: softprops/action-gh-release@v1
