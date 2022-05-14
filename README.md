@@ -22,9 +22,11 @@ The website itself and server components might be open-sourced in the future.
 
 It's an application that you run on your computer, that monitors for instances
 of Diablo II: Resurrected, and syncs your characters/items to [resurrected.trade](https://resurrected.trade) by reading
-the games memory.
+the games memory, similarly how an anti-virus might scan memory of your applications.
 
-# Why did you make this?
+It does not inject anything or modify the game in any way.
+
+## Why did you make this?
 
 Because I hate:
 
@@ -34,21 +36,24 @@ Because I hate:
 
 ## Is this "legal"?
 
-🤷 Probably not, but I doubt Blizzard would ban for this, hear out my reasoning.
+🤷 Probably not, but I'd hope Blizzard would not ban for this, and this is my reasoning:
 
 If you read the "Anti-Cheating Agreement" it does say that collecting information from/through Blizzard games is
-unauthorized, **but** this does not provide any game play advantage, and purely tries to fill a gap in Blizzard's
-offering. 
+unauthorized, **but** I'm hopeful that because this does not provide any game play advantage, and purely tries to fill a gap in Blizzard's
+offering, Blizzard would turn a blind eye on this.
 
 Other games, i.e. Path Of Exile, provides exactly the same functionality in their games, so I perceive this as Blizzard's
 unwillingness to invest time on these sort of features, rather than being generally oppose to having this type of features.
 
-Also, public map hacks have been out there for quite a while, most of them function the same way (by reading games memory), 
+It's also known that public map hacks have been out there for quite a while, most of them function the same way (by reading games memory), 
 and I have not yet heard anyone getting banned for using one.
 
-Not to say that it will not happen, but given there have been a number of attempts from Blizzard trying to prevent map hacks 
-from working, oppose to outright banning users, I am hopeful that useful tools that do not provide a game play advantage 
-can live in peace.
+I have heard that there have been a number of attempts from Blizzard trying to prevent map hacks 
+from working, which signals that they would rather make it not work, oppose to ban a large portion of their user base.
+
+Which gives me hope that this would stop working way before you would get banned.
+
+This is not to say that this will NOT happen, so use your own judgement, I take no responsibility.
 
 ## I don't trust your binaries, how do I build this myself?
 
@@ -57,10 +62,25 @@ The project can be simply built using Visual Studio or `dotnet build` command li
 
 There should not be any special build steps outside of the standard C# toolchain.
 
-Please note, the "official" builds come in two flavours:
+Please note that debug builds assume that all of the services run on your own machine (for the purposes of development),
+so if you do plan to use your own builds with [resurrected.trade](https://resurrected.trade), make sure you are building a
+release build.
+
+The "official" builds come in two flavours:
 
 1. FrameworkDependant - relies on having .NET Core 3.1 installed on your machine beforehand.
-2. Self contained - ships .NET Core 3.1 time as part of the application (hence it's massive)
+2. Self contained - ships .NET Core 3.1 time as part of the application (hence why it's so large)
+
+## I can't launch the application, it shows up as "Windows protected your PC"?
+
+This is because this application is new, has not yet had many users, therefore Windows does not trust it.
+
+You can click "More Info" and "Run Anyway" to start it.
+
+![image](https://user-images.githubusercontent.com/104942311/168426474-77b1dc15-79d1-494b-b023-43a4df5cb857.png)
+
+This would not happen if you were to build the application yourself, but you'd probably miss out on potential updates (or have to keep rebuilding)
+which are needed as new versions of Diablo II: Resurrected are released.
 
 ## I want to help
 
