@@ -8,9 +8,10 @@ It tries to be equivalent of [poe.trade](https://poe.trade) in terms of search f
 trying to provide a better experience for trading items that can't just be referred to as "Shako" etc.
 Namely, looking for jewels, rares, with specific rolls, level requirements for low level dueling etc.
 
-Check out this show-case video showing the sites and agent features:
+Check out this show-case video showing the features:
 
-...
+[![resurrected.trade](https://img.youtube.com/vi/UfyrZsfkxkM/0.jpg)](https://www.youtube.com/watch?v=UfyrZsfkxkM)
+
 
 ## What is in this repository?
 
