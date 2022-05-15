@@ -540,7 +540,7 @@ namespace ResurrectedTrade.Agent
                 {
                     await stream.CopyToAsync(fileStream);
                 }
-
+                _logger.Info($"Starting {newName}");
                 Process.Start(newName);
                 return true;
             }

@@ -28,7 +28,7 @@ namespace ResurrectedTrade.Agent
                     return;
                 }
 
-                File.Copy(currentProcessLocation, currentProcessLocation.Replace(".update.exe", ".exe"));
+                File.Copy(currentProcessLocation, currentProcessLocation.Replace(".update.exe", ".exe"), true);
                 Process.Start(currentProcessLocation.Replace(".update.exe", ".exe"));
                 return;
             }
@@ -76,6 +76,7 @@ namespace ResurrectedTrade.Agent
 
                 Application.Idle += IdleHandler;
                 Application.Run();
+                logger.Info("Exiting...");
             }
         }
 
@@ -121,8 +122,7 @@ namespace ResurrectedTrade.Agent
                     if (!existingNewerOrEqual)
                     {
                         logger.Info("Overwriting existing installation");
-                        File.Delete(installLocation);
-                        File.Copy(currentProcessLocation, installLocation);
+                        File.Copy(currentProcessLocation, installLocation, true);
                     }
 
                     Process.Start(installLocation);
