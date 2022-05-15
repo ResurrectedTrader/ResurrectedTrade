@@ -10,6 +10,7 @@ using ResurrectedTrade.Protocol.Agent;
 using ResurrectedTrade.Protocol.Profile;
 using System;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -43,16 +44,46 @@ namespace ResurrectedTrade.Agent
         private readonly string _version;
         private CancellationTokenSource _sleepCancellation = new CancellationTokenSource();
 
+        private static readonly RegistryKey RunKey = Registry.CurrentUser.OpenSubKey(
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true
+        );
+
         private readonly Icon _whiteIcon;
         private readonly Icon _redIcon;
         private readonly Icon _greenIcon;
         private readonly Icon _blueIcon;
+        private readonly Icon _blackIcon;
 
         private readonly Logger _logger;
+        private readonly bool _installed;
+        private readonly LogViewer _logViewer;
+        private readonly string _currentProcessLocation;
 
-        public Entrypoint()
+        private State State
         {
-            _logger = new Logger(50000);
+            get => _state;
+            set
+            {
+                _state = value;
+                UpdateTrayIcon();
+            }
+        }
+
+        private Profile Profile
+        {
+            get => _profile;
+            set
+            {
+                _profile = value;
+                UpdateTrayIcon();
+            }
+        }
+
+        public Entrypoint(string currentProcessLocation, Logger logger, bool installed)
+        {
+            _currentProcessLocation = currentProcessLocation;
+            _logger = logger;
+            _installed = installed;
             var assembly = Assembly.GetAssembly(typeof(Entrypoint));
             _version = assembly?.GetName().Version?.ToString() ?? "Unknown";
             _notifyIcon = new NotifyIcon();
@@ -63,10 +94,11 @@ namespace ResurrectedTrade.Agent
             _redIcon = _whiteIcon.ScaleColor(1, 0, 0);
             _greenIcon = _whiteIcon.ScaleColor(0, 1, 0);
             _blueIcon = _whiteIcon.ScaleColor(0, 0, 1);
+            _blackIcon = _whiteIcon.ScaleColor(0, 0, 0);
+            _logViewer = new LogViewer(_blackIcon, _logger);
             _notifyIcon.Icon = _whiteIcon;
             _notifyIcon.Visible = true;
             _notifyIcon.DoubleClick += (_, args) => { Utils.OpenUrl("https://resurrected.trade/overview"); };
-            _notifyIcon.MouseMove += (_, args) => { UpdateTrayIcon(); };
             try
             {
                 _cookieContainer = Utils.LoadCookieContainer();
@@ -116,13 +148,13 @@ namespace ResurrectedTrade.Agent
 
         private void UpdateTrayIcon()
         {
-            if (_state == State.Ok && _profile != null)
+            if (State == State.Ok && Profile != null)
             {
                 _notifyIcon.ContextMenuStrip = new ContextMenuStrip
                 {
                     Items =
                     {
-                        new ToolStripMenuItem(_profile.UserId) { Enabled = false },
+                        new ToolStripMenuItem(Profile.UserId) { Enabled = false },
                         new ToolStripSeparator(),
                         new ToolStripMenuItem(
                             "Pause", null, (sender, args) =>
@@ -142,30 +174,16 @@ namespace ResurrectedTrade.Agent
                             }
                         ) { Checked = _paused, },
                         new ToolStripMenuItem("Log out", null, (sender, args) => _ = Logout()),
-                        new ToolStripSeparator(),
-                        new ToolStripMenuItem("Version")
-                        {
-                            DropDownItems = { new ToolStripMenuItem(_version) { Enabled = false } }
-                        },
-                        new ToolStripMenuItem("Show logs", null, (sender, args) => ShowLogs()),
-                        new ToolStripMenuItem("Exit", null, (sender, args) => Exit()),
                     },
                 };
             }
-            else if (_state == State.NeedsAuth)
+            else if (State == State.NeedsAuth)
             {
                 _notifyIcon.ContextMenuStrip = new ContextMenuStrip
                 {
                     Items =
                     {
                         new ToolStripMenuItem("Log in", null, (sender, args) => _ = Login()),
-                        new ToolStripSeparator(),
-                        new ToolStripMenuItem("Version")
-                        {
-                            DropDownItems = { new ToolStripMenuItem(_version) { Enabled = false } }
-                        },
-                        new ToolStripMenuItem("Show logs", null, (sender, args) => ShowLogs()),
-                        new ToolStripMenuItem("Exit", null, (sender, args) => Exit()),
                     }
                 };
             }
@@ -176,21 +194,78 @@ namespace ResurrectedTrade.Agent
                     Items =
                     {
                         new ToolStripMenuItem("Service unavailable") { Enabled = false },
-                        new ToolStripSeparator(),
-                        new ToolStripMenuItem("Version")
-                        {
-                            DropDownItems = { new ToolStripMenuItem(_version) { Enabled = false } }
-                        },
-                        new ToolStripMenuItem("Show logs", null, (sender, args) => ShowLogs()),
-                        new ToolStripMenuItem("Exit", null, (sender, args) => Exit()),
                     }
                 };
             }
+
+            _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
+            var versionSubMenu = new ToolStripMenuItem("Version")
+            {
+                DropDownItems = { new ToolStripMenuItem(_version) { Enabled = false } }
+            };
+            _notifyIcon.ContextMenuStrip.Items.Add(versionSubMenu);
+
+            if (_installed)
+            {
+                versionSubMenu.DropDownItems.Add(
+                    new ToolStripMenuItem(
+                        "Automatic updates", null, (sender, args) =>
+                        {
+                            var checkbox = sender as ToolStripMenuItem;
+                            checkbox.Checked = !checkbox.Checked;
+
+                            Utils.AgentRegistryKey.SetValue(
+                                "AUTOMATIC_UPDATES", checkbox.Checked ? 1 : 0, RegistryValueKind.DWord
+                            );
+                        }
+                    ) { Checked = (int)Utils.AgentRegistryKey.GetValue("AUTOMATIC_UPDATES", -1) == 1, }
+                );
+                _notifyIcon.ContextMenuStrip.Items.Add(
+                    new ToolStripMenuItem(
+                        "Start with Windows", null, (sender, args) =>
+                        {
+                            var checkbox = sender as ToolStripMenuItem;
+                            checkbox.Checked = !checkbox.Checked;
+                            var existing = (string)RunKey.GetValue("Resurrected Trade", null);
+                            if (checkbox.Checked)
+                            {
+                                if (existing == null)
+                                {
+                                    RunKey.SetValue(
+                                        "Resurrected Trade", _currentProcessLocation
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                if (existing != null)
+                                {
+                                    RunKey.DeleteValue("Resurrected Trade");
+                                }
+                            }
+                        }
+                    ) { Checked = (string)RunKey.GetValue("Resurrected Trade", null) != null, }
+                );
+            }
+
+            _notifyIcon.ContextMenuStrip.Items.Add(
+                new ToolStripMenuItem("Show logs", null, (sender, args) => ShowLogs())
+            );
+            _notifyIcon.ContextMenuStrip.Items.Add(
+                new ToolStripMenuItem("Exit", null, (sender, args) => Exit())
+            );
         }
 
         private void ShowLogs()
         {
-            new LogViewer(_whiteIcon, _logger).Show();
+            if (_logViewer.Visible)
+            {
+                _logViewer.Activate();
+            }
+            else
+            {
+                _logViewer.Show();
+            }
         }
 
         private void Exit()
@@ -206,23 +281,19 @@ namespace ResurrectedTrade.Agent
             {
                 try
                 {
-                    _profile = await _profileService.GetProfileAsync(new Empty());
+                    Profile = await _profileService.GetProfileAsync(new Empty());
                     Utils.SaveCookieContainer(_cookieContainer);
                     return State.Ok;
                 }
                 catch (Exception e)
                 {
-                    if (Utils.IsStatusCodeException(e, StatusCode.Unavailable))
+                    var newState = HandleException(e);
+                    if (newState != null)
                     {
-                        return State.Down;
+                        return newState.Value;
                     }
 
-                    if (Utils.IsStatusCodeException(e, StatusCode.Unauthenticated))
-                    {
-                        return State.NeedsAuth;
-                    }
-
-                    throw;
+                    _logger.Info($"Failed to fetch profile: {e}");
                 }
             }
 
@@ -231,18 +302,18 @@ namespace ResurrectedTrade.Agent
 
         private async Task WaitForProfile()
         {
-            _logger.Info($"Entering profile lookup loop in state: {_state}");
-            while (_keepRunning && _profile == null)
+            _logger.Info($"Entering profile lookup loop in state: {State}");
+            while (_keepRunning && Profile == null)
             {
                 var newState = await TryFetchProfile();
-                if (newState == State.Ok && _profile != null)
+                if (newState == State.Ok && Profile != null)
                 {
                     _logger.Info("Retreived profile");
-                    _state = newState;
+                    State = newState;
                     return;
                 }
 
-                if (_state != newState && newState == State.NeedsAuth)
+                if (State != newState && newState == State.NeedsAuth)
                 {
                     _notifyIcon.ShowBalloonTip(
                         30, "Resurrected Trade", "You need to log in again...", ToolTipIcon.None
@@ -250,10 +321,11 @@ namespace ResurrectedTrade.Agent
                 }
 
                 _logger.Info($"Current state is {newState}");
-                _state = newState;
+                State = newState;
                 await InterruptableSleep(30000);
             }
         }
+
 
         private void ResetSleepCancellation()
         {
@@ -263,12 +335,35 @@ namespace ResurrectedTrade.Agent
 
         public async Task Run()
         {
-            await CheckForUpdates();
-            _state = State.Ok;
+            var automaticUpdates = (int)Utils.AgentRegistryKey.GetValue("AUTOMATIC_UPDATES", -1);
+            if (automaticUpdates == -1)
+            {
+                DialogResult result = MessageBox.Show(
+                    "Would you like to enable automatic updates?",
+                    "Automatic Updates", MessageBoxButtons.YesNo
+                );
+                if (result == DialogResult.Yes)
+                {
+                    Utils.AgentRegistryKey.SetValue("AUTOMATIC_UPDATES", 1, RegistryValueKind.DWord);
+                    automaticUpdates = 1;
+                }
+                else if (result == DialogResult.No)
+                {
+                    Utils.AgentRegistryKey.SetValue("AUTOMATIC_UPDATES", 0, RegistryValueKind.DWord);
+                    automaticUpdates = 0;
+                }
+            }
+
+            if (await CheckForUpdates(automaticUpdates == 1))
+            {
+                return;
+            }
+
+            State = State.Ok;
             try
             {
-                _state = await TryFetchProfile();
-                if (_state == State.NeedsAuth)
+                State = await TryFetchProfile();
+                if (State == State.NeedsAuth)
                 {
                     var result = await Login();
                     while (result == DialogResult.Retry)
@@ -285,7 +380,7 @@ namespace ResurrectedTrade.Agent
                         return;
                     }
                 }
-                else if (_state == State.Down)
+                else if (State == State.Down)
                 {
                     UIUtils.ShowError(
                         "Resurrected Trade", "Seems resurrected.trade is down at the moment, we will try later..."
@@ -294,7 +389,7 @@ namespace ResurrectedTrade.Agent
                 }
                 else
                 {
-                    _state = State.Ok;
+                    State = State.Ok;
                 }
             }
             catch (Exception e)
@@ -305,7 +400,7 @@ namespace ResurrectedTrade.Agent
 
             while (_keepRunning)
             {
-                if (_profile == null)
+                if (Profile == null)
                 {
                     await WaitForProfile();
                     continue;
@@ -356,7 +451,7 @@ namespace ResurrectedTrade.Agent
             public string TagName { get; set; }
         }
 
-        private async Task CheckForUpdates()
+        private async Task<bool> CheckForUpdates(bool automaticUpdatesEnabled)
         {
             try
             {
@@ -377,37 +472,21 @@ namespace ResurrectedTrade.Agent
                     );
                     if (latestVersion > myVersion)
                     {
-                        void ClickHandler(object sender, EventArgs args)
-                        {
 #if SELF_CONTAINED
-                            var uri =
- $"https://github.com/ResurrectedTrader/ResurrectedTrade/releases/download/v{latestVersion}/ResurrectedTrade-SelfContained.exe";
+                        var uri =
+                            $"https://github.com/ResurrectedTrader/ResurrectedTrade/releases/download/v{latestVersion}/ResurrectedTrade-SelfContained.exe";
 #else
-                            var uri =
-                                $"https://github.com/ResurrectedTrader/ResurrectedTrade/releases/download/v{latestVersion}/ResurrectedTrade-FrameworkDependant.exe";
+                        var uri =
+                            $"https://github.com/ResurrectedTrader/ResurrectedTrade/releases/download/v{latestVersion}/ResurrectedTrade-FrameworkDependant.exe";
 #endif
-                            _logger.Info($"Downloading {uri}");
-                            Utils.OpenUrl(uri);
-                            _notifyIcon.BalloonTipClicked -= ClickHandler;
-                        }
-
-                        void ClosedHandler(object sender, EventArgs args)
+                        if (automaticUpdatesEnabled)
                         {
-                            _notifyIcon.BalloonTipClicked -= ClickHandler;
-                            _notifyIcon.BalloonTipClosed -= ClosedHandler;
+                            return await PerformAutomaticUpgrade(client, uri, latestVersion);
                         }
 
-                        _notifyIcon.BalloonTipClicked += ClickHandler;
-                        _notifyIcon.BalloonTipClosed += ClosedHandler;
+                        NotifyAboutUpdate(uri);
 
-#if DEBUG
-                        _logger.Info("Skipping update prompt as debug build");
-#else
-                        _notifyIcon.ShowBalloonTip(
-                            30, "Resurrected Trade", "A new version is available, click here to download",
-                            ToolTipIcon.None
-                        );
-#endif
+                        return false;
                     }
                 }
             }
@@ -415,6 +494,63 @@ namespace ResurrectedTrade.Agent
             {
                 _logger.Info($"Failed to check for updates: {e}");
             }
+
+            return false;
+        }
+
+        private void NotifyAboutUpdate(string uri)
+        {
+            void ClickHandler(object sender, EventArgs args)
+            {
+                _logger.Info($"Downloading {uri}");
+                Utils.OpenUrl(uri);
+                _notifyIcon.BalloonTipClicked -= ClickHandler;
+            }
+
+            void ClosedHandler(object sender, EventArgs args)
+            {
+                _notifyIcon.BalloonTipClicked -= ClickHandler;
+                _notifyIcon.BalloonTipClosed -= ClosedHandler;
+            }
+
+            _notifyIcon.BalloonTipClicked += ClickHandler;
+            _notifyIcon.BalloonTipClosed += ClosedHandler;
+#if OFFICIAL_BUILD
+            _notifyIcon.ShowBalloonTip(
+                30, "Resurrected Trade", "A new version is available, click here to download",
+                ToolTipIcon.None
+            );
+#else
+            _logger.Info("Skipping update prompt as debug or unofficial build");
+#endif
+        }
+
+        private async Task<bool> PerformAutomaticUpgrade(HttpClient client, string uri, Version version)
+        {
+            _notifyIcon.ShowBalloonTip(
+                10, "Resurrected Trade", $"Upgrading to version {version}",
+                ToolTipIcon.None
+            );
+            try
+            {
+                var newName = _currentProcessLocation.Replace(".exe", ".update.exe");
+                File.Delete(newName);
+                var stream = await client.GetStreamAsync(uri);
+                using (var fileStream = File.Create(newName))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
+
+                Process.Start(newName);
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.Info($"Failed to perform automatic upgrade: {e}");
+                UIUtils.ShowException("Update failed", e);
+            }
+
+            return false;
         }
 
         private async Task<State> DoExports()
@@ -429,25 +565,18 @@ namespace ResurrectedTrade.Agent
             catch (Exception e)
             {
                 _logger.Info($"Failed to initialize: {e}");
-                if (Utils.IsStatusCodeException(e, StatusCode.Unavailable))
+                var newState = HandleException(e);
+                if (newState != null)
                 {
-                    _notifyIcon.Icon = _redIcon;
-                    _profile = null;
-                    return State.Down;
-                }
-
-                if (Utils.IsStatusCodeException(e, StatusCode.Unauthenticated))
-                {
-                    _notifyIcon.Icon = _redIcon;
-                    _profile = null;
-                    return State.NeedsAuth;
+                    return newState.Value;
                 }
 
                 UIUtils.ShowException("Failed to initialize", e);
+                throw;
             }
 
-            _logger.Info($"Entering export loop in state: {_state}");
-            while (_keepRunning && _profile != null)
+            _logger.Info($"Entering export loop in state: {State}");
+            while (_keepRunning && Profile != null)
             {
                 var any = false;
                 var failed = false;
@@ -455,110 +584,133 @@ namespace ResurrectedTrade.Agent
                 if (_paused)
                 {
                     _notifyIcon.Icon = _blueIcon;
+                    await InterruptableSleep(cooldown);
+                    continue;
+                }
+
+                foreach (Process process in Process.GetProcessesByName("D2R"))
+                {
+                    var buildNumber = process.MainModule?.FileVersionInfo.FileVersion?.Split('.').Last() ?? "-1";
+                    if (!int.TryParse(buildNumber, out var version))
+                    {
+                        continue;
+                    }
+
+                    if (version != Offsets.Instance.SupportedVersion)
+                    {
+                        _logger.Info($"Unsupported version: {version}");
+                        continue;
+                    }
+
+                    try
+                    {
+                        var export = runner.GetExport(process);
+                        if (export == null)
+                        {
+                            continue;
+                        }
+
+                        var response = await runner.SubmitExport(export);
+                        if (response.Attempted)
+                        {
+                            cooldown = Math.Max(cooldown, response.CooldownMilliseconds);
+                            any = true;
+                            if (!response.Success)
+                            {
+                                failed = true;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(response.ErrorMessage))
+                            {
+                                _logger.Info($"Failed: {response.ErrorMessage} {response.ErrorId}");
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        failed = true;
+
+                        HandleException(e);
+
+                        _logger.Info(e.ToString());
+                    }
+                }
+
+                if (any)
+                {
+                    Utils.SaveCookieContainer(_cookieContainer);
+                }
+
+                if (failed)
+                {
+                    _notifyIcon.Icon = _redIcon;
+                    // Refetch manifests...
+                    break;
+                }
+
+                if (any)
+                {
+                    _notifyIcon.Icon = _greenIcon;
                 }
                 else
                 {
-                    foreach (Process process in Process.GetProcessesByName("D2R"))
-                    {
-                        var buildNumber = process.MainModule?.FileVersionInfo.FileVersion?.Split('.').Last() ?? "-1";
-                        if (!int.TryParse(buildNumber, out var version))
-                        {
-                            continue;
-                        }
-
-                        if (version != Offsets.Instance.SupportedVersion)
-                        {
-                            _logger.Info($"Unsupported version: {version}");
-                            continue;
-                        }
-
-                        try
-                        {
-                            var export = runner.GetExport(process);
-                            if (export == null)
-                            {
-                                continue;
-                            }
-
-                            var response = await runner.SubmitExport(export);
-                            if (response.Attempted)
-                            {
-                                cooldown = Math.Max(cooldown, response.CooldownMilliseconds);
-                                any = true;
-                                if (!response.Success)
-                                {
-                                    failed = true;
-                                }
-
-                                if (!string.IsNullOrWhiteSpace(response.ErrorMessage))
-                                {
-                                    _logger.Info($"Failed: {response.ErrorMessage} {response.ErrorId}");
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            failed = true;
-
-                            if (Utils.IsStatusCodeException(e, StatusCode.Unavailable))
-                            {
-                                _notifyIcon.Icon = _redIcon;
-                                _profile = null;
-                                return State.Down;
-                            }
-
-                            if (Utils.IsStatusCodeException(e, StatusCode.Unauthenticated))
-                            {
-                                _notifyIcon.Icon = _redIcon;
-                                _profile = null;
-                                return State.NeedsAuth;
-                            }
-
-                            _logger.Info(e.ToString());
-                        }
-                    }
-
-                    if (any)
-                    {
-                        Utils.SaveCookieContainer(_cookieContainer);
-                    }
-
-                    if (failed)
-                    {
-                        _notifyIcon.Icon = _redIcon;
-                        // Refetch manifests...
-                        break;
-                    }
-
-                    if (any)
-                    {
-                        _notifyIcon.Icon = _greenIcon;
-                    }
-                    else
-                    {
-                        _notifyIcon.Icon = _whiteIcon;
-                    }
+                    _notifyIcon.Icon = _whiteIcon;
                 }
 
                 await InterruptableSleep(cooldown);
             }
 
-            return _state;
+            return State;
         }
 
         private async Task Logout()
         {
             _logger.Info("Logging out...");
-            await _profileService.LogoutAsync(new Empty());
-            _profile = null;
-            _state = State.NeedsAuth;
+            try
+            {
+                await _profileService.LogoutAsync(new Empty());
+                Profile = null;
+                State = State.NeedsAuth;
+            }
+            catch (Exception e)
+            {
+                var newState = HandleException(e);
+                if (newState == null)
+                {
+                    UIUtils.ShowException("Logout failed", e);
+                }
+                else
+                {
+                    State = newState.Value;
+                }
+            }
+
             _sleepCancellation.Cancel();
             Utils.SaveCookieContainer(_cookieContainer);
         }
 
+        private State? HandleException(Exception e)
+        {
+            if (Utils.IsStatusCodeException(e, StatusCode.Unavailable))
+            {
+                _notifyIcon.Icon = _redIcon;
+                Profile = null;
+                return State.Down;
+            }
+
+            if (Utils.IsStatusCodeException(e, StatusCode.Unauthenticated))
+            {
+                _notifyIcon.Icon = _redIcon;
+                Profile = null;
+                return State.NeedsAuth;
+            }
+
+            return null;
+        }
+
         private async Task<DialogResult> Login()
         {
-            var prompt = new LoginPrompt(_profileService);
+            var prompt = new LoginPrompt(_blackIcon, _profileService);
             var outcome = prompt.ShowDialog();
             if (outcome == DialogResult.Cancel)
             {
@@ -570,9 +722,9 @@ namespace ResurrectedTrade.Agent
 
             try
             {
-                _profile = await _profileService.GetProfileAsync(new Empty());
+                Profile = await _profileService.GetProfileAsync(new Empty());
                 _logger.Info("Successfully retrieved profile...");
-                _state = State.Ok;
+                State = State.Ok;
                 _sleepCancellation.Cancel();
             }
             catch (Exception e)

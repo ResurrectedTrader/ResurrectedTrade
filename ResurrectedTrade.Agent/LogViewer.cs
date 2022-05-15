@@ -11,12 +11,26 @@ namespace ResurrectedTrade.Agent
         public LogViewer(Icon icon, Logger logger)
         {
             _logger = logger;
-            _logger.Changed += RefreshLogs;
             InitializeComponent();
             Icon = icon;
-            Closing += (sender, args) => { _logger.Changed -= RefreshLogs; };
-            RefreshLogs(null, null);
             logBox.ScrollBars = ScrollBars.Vertical;
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            _logger.Changed += RefreshLogs;
+            RefreshLogs(null, null);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+            _logger.Changed -= RefreshLogs;
         }
 
         private void RefreshLogs(object sender, EventArgs e)

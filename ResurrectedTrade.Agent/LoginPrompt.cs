@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -13,8 +14,9 @@ namespace ResurrectedTrade.Agent
     {
         private readonly ProfileService.ProfileServiceClient _client;
 
-        public LoginPrompt(ProfileService.ProfileServiceClient client)
+        public LoginPrompt(Icon icon, ProfileService.ProfileServiceClient client)
         {
+            Icon = icon;
             _client = client;
             InitializeComponent();
             Username.Text = (string)Utils.AgentRegistryKey.GetValue("USERNAME", "");
