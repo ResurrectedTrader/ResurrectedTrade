@@ -83,7 +83,7 @@ namespace ResurrectedTrade.Agent
                     Application.Idle -= IdleHandler;
                     await entrypoint.Run();
                     Application.ExitThread();
-                }q
+                }
 
                 Application.Idle += IdleHandler;
                 Application.Run();

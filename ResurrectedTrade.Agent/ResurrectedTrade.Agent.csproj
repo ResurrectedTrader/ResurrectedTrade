@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>exe</OutputType>
         <Nullable>disable</Nullable>
         <UseWindowsForms>true</UseWindowsForms>
         <RootNamespace>ResurrectedTrade.Agent</RootNamespace>
@@ -12,7 +12,9 @@
         <DebugType>None</DebugType>
         <Optimize>true</Optimize>
         <DebugSymbols>false</DebugSymbols>
+        <SingleFile>true</SingleFile>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
         <DebuggerSupport>false</DebuggerSupport>
         <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
         <EventSourceSupport>false</EventSourceSupport>
