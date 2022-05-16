@@ -58,7 +58,7 @@ jobs:
         run: Move-Item out/ResurrectedTrade.exe out/ResurrectedTrade-FrameworkDependant.exe
 
       - name: Publish Agent Self-Contained
-        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release /p:DefineConstants="SELF_CONTAINED;OFFICIAL_BUILD" --self-contained --no-build --output out
+        run: dotnet publish ResurrectedTrade.Agent/ResurrectedTrade.Agent.csproj --configuration Release /p:DefineConstants="SELF_CONTAINED%3BOFFICIAL_BUILD" --self-contained --no-build --output out
 
       - name: Move self contained
         run: Move-Item out/ResurrectedTrade.exe out/ResurrectedTrade-SelfContained.exe
