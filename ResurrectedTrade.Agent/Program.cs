@@ -56,6 +56,7 @@ namespace ResurrectedTrade.Agent
                 try
                 {
                     File.Delete(previousUpdateFile);
+                    logger.Info("Deleted previous update file");
                 }
                 catch (Exception e)
                 {
