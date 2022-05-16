@@ -18,6 +18,16 @@ namespace ResurrectedTrade.Agent
         private static void Main()
         {
             var logger = new Logger(50000);
+#if OFFICIAL_BUILD
+            logger.Info("Official build");
+#else
+            logger.Info("Unofficial build");
+#endif
+#if SELF_CONTAINED
+            logger.Info("Self contained build");
+#else
+            logger.Info("Framework dependant build");
+#endif
             var currentProcessLocation = Process.GetCurrentProcess().MainModule.FileName;
             if (currentProcessLocation.EndsWith(".update.exe"))
             {
@@ -54,6 +64,7 @@ namespace ResurrectedTrade.Agent
             }
 
             var installState = MaybePerformInstall(logger, currentProcessLocation);
+            logger.Info($"Installation state: {installState}");
             if (installState == InstallState.Installed)
             {
                 return;
@@ -72,7 +83,7 @@ namespace ResurrectedTrade.Agent
                     Application.Idle -= IdleHandler;
                     await entrypoint.Run();
                     Application.ExitThread();
-                }
+                }q
 
                 Application.Idle += IdleHandler;
                 Application.Run();
@@ -103,7 +114,8 @@ namespace ResurrectedTrade.Agent
                 {
                     Directory.CreateDirectory(installDirectory);
                     var existingNewerOrEqual = false;
-                    if (File.Exists(installLocation))
+                    var exists = File.Exists(installLocation);
+                    if (exists)
                     {
                         logger.Info("Installation already exists.");
                         try
@@ -121,7 +133,13 @@ namespace ResurrectedTrade.Agent
 
                     if (!existingNewerOrEqual)
                     {
-                        logger.Info("Overwriting existing installation");
+                        if (exists) {
+                            logger.Info("Overwriting existing installation");
+                        }
+                        else
+                        {
+                            logger.Info($"Installing to {installLocation}");
+                        }
                         File.Copy(currentProcessLocation, installLocation, true);
                     }
 
