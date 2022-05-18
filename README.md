@@ -10,7 +10,7 @@ Namely, looking for jewels, rares, with specific rolls, level requirements for l
 
 Check out this show-case video showing the features:
 
-[![resurrected.trade](https://img.youtube.com/vi/UfyrZsfkxkM/0.jpg)](https://www.youtube.com/watch?v=UfyrZsfkxkM)
+[![resurrected.trade](https://img.youtube.com/vi/H9arCErFMdI/0.jpg)](https://www.youtube.com/watch?v=H9arCErFMdI)
 
 
 ## What is in this repository?
