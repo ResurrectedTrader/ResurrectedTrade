@@ -335,7 +335,12 @@ namespace ResurrectedTrade.Agent
 
         public async Task Run()
         {
+#if OFFICIAL_BUILD
             var automaticUpdates = (int)Utils.AgentRegistryKey.GetValue("AUTOMATIC_UPDATES", -1);
+#else
+            var automaticUpdates = 0;
+#endif
+
             if (automaticUpdates == -1)
             {
                 DialogResult result = MessageBox.Show(
