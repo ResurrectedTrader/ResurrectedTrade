@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -128,7 +129,17 @@ namespace ResurrectedTrade.AgentBase
                         accountExport.Locale = Locale.EnUs;
                         break;
                     case "ZHTW":
-                        accountExport.Locale = Locale.ZhTw;
+                        // People in China play using the TW locale, as the game
+                        // is not officailly released in China, in which case adjust the
+                        // locale based on the operating systems language.
+                        if (CultureInfo.CurrentUICulture.Name == "zh-CN")
+                        {
+                            accountExport.Locale = Locale.ZhCn;
+                        }
+                        else
+                        {
+                            accountExport.Locale = Locale.ZhTw;
+                        }
                         break;
                     case "DEDE":
                         accountExport.Locale = Locale.DeDe;

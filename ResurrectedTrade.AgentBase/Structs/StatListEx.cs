@@ -64,8 +64,10 @@ namespace ResurrectedTrade.AgentBase.Structs
                 return null;
             }
 
+            var attempts = 0;
             while ((flags & statList.Flags & 0xFFFFDFFF) == 0)
             {
+                if (attempts++ == 10) return null;
                 statList = statList.PrevLink;
                 if (statList == null)
                 {
