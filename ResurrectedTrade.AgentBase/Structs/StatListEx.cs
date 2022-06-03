@@ -22,6 +22,8 @@ namespace ResurrectedTrade.AgentBase.Structs
 
         public uint Flags => Struct.BaseStatList.Flags;
 
+        public bool IsBaseStatList => (0x40 & Struct.BaseStatList.Flags & 0xFFFFDFFF) != 0;
+
         public IReadOnlyList<D2StatStrc> BaseStats =>
             Read<D2StatStrc>(
                 Struct.BaseStatList.Stats.pStat,

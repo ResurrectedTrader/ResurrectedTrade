@@ -59,6 +59,33 @@ namespace ResurrectedTrade.AgentBase
             var modifierStats = item.StatList.GetAddedStatsList();
             if (modifierStats != null)
             {
+                if (item.ItemData.Quality == ItemQuality.Set)
+                {
+                    var statLists = new List<StatListEx>();
+                    statLists.Add(modifierStats);
+                    while (modifierStats.PrevLink != null)
+                    {
+                        modifierStats = modifierStats.PrevLink;
+                        if (modifierStats.IsBaseStatList)
+                        {
+                            statLists.Add(modifierStats);
+                        }
+                    }
+
+                    // Remove set bonuses from full stats. This is all stat lists except the last one.
+                    for (var i = 0; i < statLists.Count - 1; i++)
+                    {
+                        foreach (var stat in statLists[i].BaseStats)
+                        {
+                            int idx = fullStats.FindIndex(o => (int)stat.Stat == o.Id && stat.Layer == o.Layer);
+                            if (idx > -1)
+                            {
+                                fullStats.RemoveAt(idx);
+                            }
+                        }
+                    }
+                }
+
                 // Statlist that contains ED etc stats that are not visible in the full stat list, but used for computation
                 foreach (var stat in modifierStats.BaseStats)
                 {

@@ -593,8 +593,9 @@ namespace ResurrectedTrade.Agent
                     continue;
                 }
 
-                foreach (Process process in Process.GetProcessesByName("D2R"))
+                foreach (Process process in Process.GetProcesses())
                 {
+                    if (!process.ProcessName.StartsWith("D2R")) continue;
                     var buildNumber = process.MainModule?.FileVersionInfo.FileVersion?.Split('.').Last() ?? "-1";
                     if (!int.TryParse(buildNumber, out var version))
                     {
