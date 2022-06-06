@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
-        <OutputType>exe</OutputType>
+        <OutputType Condition="'$(Configuration)' == 'Release'">winexe</OutputType>
+        <OutputType Condition="'$(Configuration)' != 'Release'">exe</OutputType>
         <Nullable>disable</Nullable>
         <UseWindowsForms>true</UseWindowsForms>
         <RootNamespace>ResurrectedTrade.Agent</RootNamespace>
