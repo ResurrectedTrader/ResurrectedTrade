@@ -39,7 +39,7 @@ Because I hate:
 
 ## Is this "legal"?
 
-No, you will most likely get banned for using this.
+No, you will most likely get banned for using this. Blizzard decided to ban 30% of player base using MapHacks, there is no reason they would not do it for this application if it got popular.
 
 ~🤷 Probably not, but I'd hope Blizzard would not ban for this, and this is my reasoning:~
 
