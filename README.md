@@ -1,5 +1,7 @@
 # Resurrected Trade Agent
 
+# DO NOT USE THIS ONLINE, THIS IS EASILY DETECTED, AND IF USED ONLINE AND WILL MOST LIKELY GET YOU BANNED.
+
 ## What is [resurrected.trade](https://resurrected.trade)?
 
 It's a website for trading items as well as mule management in Diablo II: Resurrected.
@@ -37,24 +39,21 @@ Because I hate:
 
 ## Is this "legal"?
 
-🤷 Probably not, but I'd hope Blizzard would not ban for this, and this is my reasoning:
+No, you will most likely get banned for using this.
 
-If you read the "Anti-Cheating Agreement" it does say that collecting information from/through Blizzard games is
-unauthorized, **but** I'm hopeful that because this does not provide any game play advantage, and purely tries to fill a gap in Blizzard's
-offering, Blizzard would turn a blind eye on this.
+~🤷 Probably not, but I'd hope Blizzard would not ban for this, and this is my reasoning:~
 
-Other games, i.e. Path Of Exile, provides exactly the same functionality in their games, so I perceive this as Blizzard's
-unwillingness to invest time on these sort of features, rather than being generally oppose to having this type of features.
+~If you read the "Anti-Cheating Agreement" it does say that collecting information from/through Blizzard games is unauthorized, **but** I'm hopeful that because this does not provide any game play advantage, and purely tries to fill a gap in Blizzard's offering, Blizzard would turn a blind eye on this.~
 
-It's also known that public map hacks have been out there for quite a while, most of them function the same way (by reading games memory), 
-and I have not yet heard anyone getting banned for using one.
+~Other games, i.e. Path Of Exile, provides exactly the same functionality in their games, so I perceive this as Blizzard's unwillingness to invest time on these sort of features, rather than being generally oppose to having this type of features.~
 
-I have heard that there have been a number of attempts from Blizzard trying to prevent map hacks 
-from working, which signals that they would rather make it not work, oppose to ban a large portion of their user base.
+~It's also known that public map hacks have been out there for quite a while, most of them function the same way (by reading games memory), and I have not yet heard anyone getting banned for using one.~
 
-Which gives me hope that this would stop working way before you would get banned.
+~I have heard that there have been a number of attempts from Blizzard trying to prevent map hacks from working, which signals that they would rather make it not work, oppose to ban a large portion of their user base.~
 
-This is not to say that this will NOT happen, so use your own judgement, I take no responsibility.
+~Which gives me hope that this would stop working way before you would get banned.~
+
+~This is not to say that this will NOT happen, so use your own judgement, I take no responsibility.~
 
 ## I don't trust your binaries, how do I build this myself?
 
