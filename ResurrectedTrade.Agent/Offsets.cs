@@ -7,13 +7,13 @@ namespace ResurrectedTrade.Agent
     {
         public static readonly Offsets Instance = new Offsets();
 
-        public int SupportedVersion => 69807;
-        public Ptr UnitHashTable => 0x226C6C0;
-        public Ptr SessionData => 0x2459B78;
-        public Ptr Pets => 0x2287CB8;
-        public Ptr UIState => 0x227C398;
-        public Ptr IsOnlineGame => 0x20E7ED0;
-        public Ptr WidgetStates => 0x22A4838;
-        public Ptr CharFlags => 0x20DD56B;
+        public int SupportedVersion => 70569;
+        public Ptr UnitHashTable => 0x224ECA0;
+        public Ptr SessionData => 0x243C518;
+        public Ptr Pets => 0x226a3a0;
+        public Ptr UIState => 0x225e978;
+        public Ptr IsOnlineGame => 0x210a650;
+        public Ptr WidgetStates => 0x2286e18;
+        public Ptr CharFlags => 0x20ffccb;
     }
 }
