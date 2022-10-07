@@ -17,7 +17,7 @@ namespace ResurrectedTrade.Agent
         [STAThread]
         private static void Main()
         {
-            var logger = new Logger(50000);
+            var logger = new Logger(500);
 #if OFFICIAL_BUILD
             logger.Info("Official build");
 #else

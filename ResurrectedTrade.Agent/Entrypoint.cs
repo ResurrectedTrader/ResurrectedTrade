@@ -634,11 +634,14 @@ namespace ResurrectedTrade.Agent
                     }
                     catch (Exception e)
                     {
-                        failed = true;
+                        if (!process.HasExited)
+                        {
+                            failed = true;
 
-                        HandleException(e);
+                            HandleException(e);
 
-                        _logger.Info(e.ToString());
+                            _logger.Info(e.ToString());
+                        }
                     }
                 }
 
