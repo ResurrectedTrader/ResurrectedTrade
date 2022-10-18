@@ -86,8 +86,8 @@ namespace ResurrectedTrade.AgentBase.Structs
     {
         [FieldOffset(0x0)] public readonly D2StatListStrc BaseStatList; // Without item modifiers
         [FieldOffset(0x48)] public readonly Ptr pPrevLink;
-        [FieldOffset(0x68)] public readonly Ptr pLastList;
-        [FieldOffset(0x70)] public readonly Ptr pMyStats;
+        [FieldOffset(0x70)] public readonly Ptr pLastList;
+        [FieldOffset(0x78)] public readonly Ptr pMyStats;
         [FieldOffset(0x88)] public readonly D2StatsArrayStrc FullStats; // With item modifiers
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]

@@ -220,7 +220,7 @@ namespace ResurrectedTrade.AgentBase
             var states = _access.Read<D2UIStates>(_access.BaseAddress + _offsets.UIState);
             if (!states.InGame || states.LoadScreenVisible)
             {
-                _logger.Debug($"Not in game {states.InGame}, or in load screen {states.LoadScreenVisible}");
+                _logger.Debug($"In game = {states.InGame}, in load screen = {states.LoadScreenVisible}");
                 return null;
             }
 

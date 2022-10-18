@@ -6,6 +6,6 @@ namespace ResurrectedTrade.AgentBase.Structs
     public readonly struct D2UIStates
     {
         [FieldOffset(0x000)] public readonly bool InGame;
-        [FieldOffset(0x16C)] public readonly bool LoadScreenVisible;
+        [FieldOffset(0x168)] public readonly bool LoadScreenVisible;
     }
 }
