@@ -80,6 +80,11 @@ namespace ResurrectedTrade.AgentBase
             {
                 battleTag = "_";
             }
+            else if (string.IsNullOrWhiteSpace(battleTag))
+            {
+                // Sometimes we fail to read the battle tag, in which case ignore and try again later.
+                return null;
+            }
 
             var capture = new Capture(_offsets, _logger, access);
 

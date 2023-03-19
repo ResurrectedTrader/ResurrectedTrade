@@ -19,7 +19,7 @@ namespace ResurrectedTrade.AgentBase
         private static readonly Grid[] SupportedGrids =
         {
             Grid.Equipped,
-            //Enums.GridType.Belt,
+            //Grid.Belt,
             Grid.Inventory, Grid.Cube, Grid.Stash
         };
 
@@ -48,13 +48,14 @@ namespace ResurrectedTrade.AgentBase
         }
 
         private GridExport GetGridExport(
-            Structs.Grid grid, GridManifest manifest, bool replace = false, bool swapWeapons = false
+            Structs.Grid grid, GridManifest manifest, bool replace = false, bool checkWeaponSwap = false
         )
         {
             var export = new GridExport();
             Dictionary<uint, int> positionToHash = manifest?.Items.ToDictionary(o => o.Position, o => o.Hash) ??
                                                    new Dictionary<uint, int>();
-            if (swapWeapons)
+            var swapWeapons = false;
+            if (checkWeaponSwap)
             {
                 swapWeapons = GetStateFlag(0xF2D7CF8E9CC08212) == 1;
             }
