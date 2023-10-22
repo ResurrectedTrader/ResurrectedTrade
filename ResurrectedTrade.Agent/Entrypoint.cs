@@ -604,7 +604,7 @@ namespace ResurrectedTrade.Agent
 
                     if (version != Offsets.Instance.SupportedVersion)
                     {
-                        _logger.Info($"Unsupported version: {version}");
+                        _logger.Info($"Unsupported version: {version} / {process.MainModule?.FileVersionInfo.FileVersion} / {process.ProcessName}");
                         continue;
                     }
 

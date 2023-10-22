@@ -7,9 +7,10 @@ namespace ResurrectedTrade.AgentBase
         Ptr UnitHashTable { get; }
         Ptr SessionData { get; }
         Ptr Pets { get; }
-        Ptr UIState { get; }
+        Ptr InGame { get; }
         Ptr IsOnlineGame { get; }
         Ptr WidgetStates { get; }
         Ptr CharFlags { get; }
+        Ptr LoadGameComplete { get; }
     }
 }

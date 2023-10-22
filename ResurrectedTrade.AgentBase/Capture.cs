@@ -218,10 +218,17 @@ namespace ResurrectedTrade.AgentBase
         public Export GetExport(Manifest manifest, bool replace = false, bool isOnline = false)
         {
             // Don't do much while not in game or in loading screen
-            var states = _access.Read<D2UIStates>(_access.BaseAddress + _offsets.UIState);
-            if (!states.InGame || states.LoadScreenVisible)
+            var inGame = _access.Read<bool>(_access.BaseAddress + _offsets.InGame);
+            if (!inGame)
             {
-                _logger.Debug($"In game = {states.InGame}, in load screen = {states.LoadScreenVisible}");
+                _logger.Debug($"In game = {inGame}");
+                return null;
+            }
+
+            var loadComplete = _access.Read<bool>(_access.BaseAddress + _offsets.LoadGameComplete);
+            if (!loadComplete)
+            {
+                _logger.Debug($"Load complete = {loadComplete}");
                 return null;
             }
 
