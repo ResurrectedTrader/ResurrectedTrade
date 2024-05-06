@@ -1,6 +1,6 @@
 # Resurrected Trade Agent
 
-# DO NOT USE THIS ONLINE, THIS IS EASILY DETECTED, AND IF USED ONLINE AND WILL MOST LIKELY GET YOU BANNED.
+# !! Easily detected online, no reported bans, but use at your own risk !!
 
 ## What is [resurrected.trade](https://resurrected.trade)?
 
@@ -39,21 +39,10 @@ Because I hate:
 
 ## Is this "legal"?
 
-No, you will most likely get banned for using this. Blizzard decided to ban 30% of player base using MapHacks, there is no reason they would not do it for this application if it got popular.
-
-~🤷 Probably not, but I'd hope Blizzard would not ban for this, and this is my reasoning:~
-
-~If you read the "Anti-Cheating Agreement" it does say that collecting information from/through Blizzard games is unauthorized, **but** I'm hopeful that because this does not provide any game play advantage, and purely tries to fill a gap in Blizzard's offering, Blizzard would turn a blind eye on this.~
-
-~Other games, i.e. Path Of Exile, provides exactly the same functionality in their games, so I perceive this as Blizzard's unwillingness to invest time on these sort of features, rather than being generally oppose to having this type of features.~
-
-~It's also known that public map hacks have been out there for quite a while, most of them function the same way (by reading games memory), and I have not yet heard anyone getting banned for using one.~
-
-~I have heard that there have been a number of attempts from Blizzard trying to prevent map hacks from working, which signals that they would rather make it not work, oppose to ban a large portion of their user base.~
-
-~Which gives me hope that this would stop working way before you would get banned.~
-
-~This is not to say that this will NOT happen, so use your own judgement, I take no responsibility.~
+🤷 Probably not, but I'd hope Blizzard would not ban for this, as it does not provide you with a gameplay advantage.
+Players did get banned for using map hacks, which used simillar methods (by reading the games memory), however they do provide a game play advantage.
+There are also simillar applications based on Overwolf that are supposedly "Blizzard approved".
+I am not aware of any cases of users using this and being banned, but this is not to say that this will not happen, hence use at your own risk.
 
 ## I don't trust your binaries, how do I build this myself?
 
